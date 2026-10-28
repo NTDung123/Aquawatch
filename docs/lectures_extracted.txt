@@ -1,0 +1,1108 @@
+Text and math tokens in source order. Native equation XML is preserved in lectures_extracted.json.
+Embedded image content requires visual inspection; image filenames are listed per slide.
+
+# Lecture1.pptx (32 slides)
+SHA-256: f8fa734c4e57cbf580b11fb81ee9149758758511e1a95efa8826d2f10a8ca38d
+
+## Slide 1
+Introduction to Machine Learning
+1
+
+## Slide 2
+2
+What Is Machine Learning? 
+### Images: ppt/media/image2.png, ppt/media/image3.png
+
+## Slide 3
+3
+What Is Machine Learning? 
+Machine learning (ML) is a collection of algorithms and techniques used to design systems that learn from data. ML algorithms have a strong mathematical and statistical basis, but they do not take into account domain knowledge. ML consists of the following disciplines:■ Scientific computing■ Mathematics■ Statistics 
+
+## Slide 4
+4
+What Is Machine Learning? 
+A data scientist needs to know about which method of machine learning will best help in completing this taskand how to apply it. The data scientist does not necessarily need to know how that method works, although knowing this will always help in building a more accurate learning model. 
+
+## Slide 5
+5
+What Is Machine Learning? 
+There are three main types of problems that we want to solve using machine learning. These problem types are as follows:Classification: Is this A or B?Regression: How much or how many?Clustering: How is this organized? 
+
+## Slide 6
+6
+What Is Machine Learning? 
+There are three main types of problems that we want to solve using machine learning. These problem types are as follows:Classification: Is this A or B?Regression: How much or how many?Clustering: How is this organized? 
+
+## Slide 7
+7
+ClassificationIn machine learning, classification is identifying to which set of categories a new observation belongs based on the set of training data containing in the observed categories. 
+A classification problem with two classes is known as a two-class classification problem. Those with more than two classes are known as multi-class classification problems. 
+### Images: ppt/media/image4.png
+
+## Slide 8
+8
+RegressionRegression helps in forecasting the future by estimating the relationship between variables. Unlike classification (which predicts the class to which an observation belongs), regression returns a continuous output variable. Here are some examples of regression problems:■ Predicting the sales number for a particular item for the next quarter■ Predicting the temperatures for next week■ Predicting the lifespan of a particular model of tire 
+### Images: ppt/media/image5.png
+
+## Slide 9
+9
+ClusteringClustering helps in grouping similar data points into intuitive groups. Given a set of data, clustering helps you discover how they are organized by grouping them into natural clumps.
+Examples of clustering problems are as follows:■ Which viewers like the same genre of movies■ Which models of hard drives fail in the same way
+Clustering is very useful when you want to discover a specific pattern in the data. 
+### Images: ppt/media/image6.png
+
+## Slide 10
+10
+Types of Machine Learning AlgorithmsMachine learning algorithms fall into two broad categories:
+■ Supervised learning algorithms are trained with labeled data. In other words, data composed of examples of the desired answers. For instance, a model that identifies fraudulent credit card use would be trained from a datasetwith labeled data points of known fraudulent and valid charges. Most machine learning is supervised.
+■ Unsupervised learning algorithms are used on data with no labels, and the goal is to find relationships in the data. For instance, you might want to find groupings of customer demographics with similar buying habits. 
+
+## Slide 11
+11
+Extending Python Using NumPy 
+What Is NumPy?In Python, you usually use the list data type to store a collection of items. The Python list is similar to the concept of arrays in languages like Java, C#, and JavaScript. The following code snippet shows a Python list:
+list1 = [1,2,3,4,5]
+Unlike arrays, a Python list does not need to contain elements of the same type. The following example is a perfectly legal list in Python:
+list2 = [1,"Hello",3.14,True,5] 
+
+## Slide 12
+12
+Extending Python Using NumPy 
+Before using NumPy, you first need to import the NumPy package (you mayuse its conventional alias np if you prefer):import numpy as np+The first way to make NumPy arrays is to create them intrinsically, using thefunctions built right into NumPy. First, you can use the arange() function tocreate an evenly spaced array with a given interval:a1 = np.arange(10) # creates a range from 0 to 9print(a1) # [0 1 2 3 4 5 6 7 8 9]print(a1.shape) # (10,)+The preceding statement creates a rank 1 array (one-dimensional) of ten elements. To get the shape of the array, use the shape property. Think of a1 as a 10×1 matrix.+You can also specify a step in the arange() function. The following code snippet inserts a step value of 2:a2 = np.arange(0,10,2) # creates a range from 0 to 9, step 2print(a2) # [0 2 4 6 8]+To create an array of a specific size filled with 0s, use the zeros() function:a3 = np.zeros(5) # create an array with all 0sprint(a3) # [ 0. 0. 0. 0. 0.]print(a3.shape) # (5,)+You can also create two-dimensional arrays using the zeros() function:a4 = np.zeros((2,3)) # array of rank 2 with all 0s; 2 rows and 3# columnsprint(a4.shape) # (2,3) 
+
+## Slide 13
+13
+Extending Python Using NumPy 
++If you want an array filled with a specific number instead of 0, use the full() function:a5 = np.full((2,3), 8) # array of rank 2 with all 8sprint(a5)'''[[8 8 8][8 8 8]]‘‘’+Sometimes, you need to create an array that mirrors an identity matrix. In NumPy, you can do so using the eye() function:a6 = np.eye(4) # 4x4 identity matrixprint(a6)'''[[ 1. 0. 0. 0.][ 0. 1. 0. 0.][ 0. 0. 1. 0.][ 0. 0. 0. 1.]]'‘’+The eye() function returns a 2-D array with ones on the diagonal and zeros elsewhere.
+
+## Slide 14
+14
+Extending Python Using NumPy 
++To create an array filled with random numbers, you can use the random() function from the numpy.random module:a7 = np.random.random((2,4)) # rank 2 array (2 rows 4 columns) with# random values# in the half-open interval [0.0, 1.0)print(a7)'''[[ 0.48255806 0.23928884 0.99861279 0.4624779 ][ 0.18721584 0.71287041 0.84619432 0.65990083]]'‘’+Another way to create a NumPy array is to create it from a Python list as follows:list1 = [1,2,3,4,5] # list1 is a list in Pythonr1 = np.array(list1) # rank 1 arrayprint(r1) # [1 2 3 4 5] 
+
+## Slide 15
+15
+Extending Python Using NumPy 
+Array Indexing+Accessing elements in the array is similar to accessing elements in a Python list:print(r1[0]) # 1print(r1[1]) # 2+The following code snippet creates another array named r2, which is two-dimensional:list2 = [6,7,8,9,0]r2 = np.array([list1,list2]) # rank 2 arrayprint(r2)'''[[1 2 3 4 5][6 7 8 9 0]]'''print(r2.shape) # (2,5) - 2 rows and 5 columnsprint(r2[0,0]) # 1print(r2[0,1]) # 2print(r2[1,0]) # 6+Here, r2 is a rank 2 array, with two rows and five columns.Besides using an index to access elements in an array, you can also use a list as the index as follows:list1 = [1,2,3,4,5]r1 = np.array(list1)print(r1[[2,4]]) # [3 5] 
+
+## Slide 16
+16
+Extending Python Using NumPy 
+Slicing Arrays+Slicing in NumPy arrays is similar to how it works with a Python list. Consider the following example:a = np.array([[1,2,3,4,5],[4,5,6,7,8],[9,8,7,6,5]]) # rank 2 arrayprint(a)'''[[1 2 3 4 5][4 5 6 7 8][9 8 7 6 5]]'‘’+To extract the last two rows and first three columns, you can use slicing:b1 = a[1:3, :3] # row 1 to 3 (not inclusive) and first 3 columnsprint(b1)The preceding code snippet will print out the following:[[4 5 6][9 8 7]] 
+
+## Slide 17
+17
+Extending Python Using NumPy 
+Reshaping ArraysYou can reshape an array to another dimension using the reshape() function.Using the b5 (which is a rank 2 array) example, you can reshape it to a rank 1 array as follows:b5 = b5.reshape(-1,)print(b5)'''[9 8 7 6 5 4]''' 
+
+## Slide 18
+18
+Example
+You are given:
+A large dataset X of shape (N, D) ( N = 5,000 ,D=128) 
+Calculate Euclidean Distance, Cosine Distance between all pairs of vector
+
+## Slide 19
+19
+Example
+https://www.kaggle.com/code/cuonghoang12/eucline-distance/edit
+
+## Slide 20
+20
+Extending Python Using NumPy 
+Array MathYou can perform array math very easily on NumPy arrays. Consider the following two rank 2 arrays:x1 = np.array([[1,2,3],[4,5,6]])y1 = np.array([[7,8,9],[2,3,4]])
++To add these two arrays together, you use the + operator as follows:print(x1 + y1)The result is the addition of each individual element in the two arrays:[[ 8 10 12][ 6 8 10]] 
++ Apart from addition, you can also perform subtraction, multiplication, as well as division with NumPy arrays:print(x1 - y1) # same as np.subtract(x1,y1)'''[[-6 -6 -6][ 2 2 2]]'''print(x1 * y1) # same as np.multiply(x1,y1)'''[[ 7 16 27][ 8 15 24]]'''print(x1 / y1) # same as np.divide(x1,y1)'''[[ 0.14285714 0.25 0.33333333][ 2. 1.66666667 1.5 ]]''' 
+
+## Slide 21
+21
+Extending Python Using NumPy 
+Dot Product
+In NumPy, dot product is accomplished using the dot() function:x = np.array([2,3])y = np.array([4,2])np.dot(x,y) # 2x4 + 3x2 = 14Dot products also work on rank 2 arrays. If you perform a dot product of tworank 2 arrays, it is equivalent to the following matrix multiplication:x2 = np.array([[1,2,3],[4,5,6]])y2 = np.array([[7,8],[9,10], [11,12]])print(np.dot(x2,y2)) # matrix multiplication'''[[ 58 64][139 154]]''' 
+### Images: ppt/media/image7.png
+
+## Slide 22
+22
+Extending Python Using NumPy 
+MatrixNumPy provides another class in addition to arrays (ndarray): matrix. Thematrix class is a subclass of the ndarray, and it is basically identical to the ndarray with one notable exception—a matrix is strictly two-dimensional, while an ndarray can be multidimensional. 
+Creating a matrix object is similar to creating a NumPy array:x2 = np.matrix([[1,2],[4,5]])y2 = np.matrix([[7,8],[2,3]])You can also convert a NumPy array to a matrix using the asmatrix() function:x1 = np.array([[1,2],[4,5]])y1 = np.array([[7,8],[2,3]])x1 = np.asmatrix(x1)y1 = np.asmatrix(y1) 
+
+## Slide 23
+23
+Extending Python Using NumPy 
+Another important difference between an ndarray and a matrix occurs when you perform multiplications on them. When multiplying two ndarray objects, the result is the element-by-element multiplication that we have seen earlier.On the other hand, when multiplying two matrix objects, the result is the dot product (equivalent to the np.dot() function):x1 = np.array([[1,2],[4,5]])y1 = np.array([[7,8],[2,3]])print(x1 * y1) # element-by-element multiplication'''[[ 7 16][ 8 15]]'''x2 = np.matrix([[1,2],[4,5]])y2 = np.matrix([[7,8],[2,3]])print(x2 * y2) # dot product; same as np.dot()'''[[11 14][38 47]]''' 
+
+## Slide 24
+24
+Extending Python Using NumPy 
+NumPy SortingNumPy provides a number of efficient sorting functions that make it very easy to sort an array. The first function for sorting is sort(), which takes in an array and returns a sorted array. Consider the following:
+ages = np.array([34,12,37,5,13])sorted_ages = np.sort(ages) # does not modify the original arrayprint(sorted_ages) # [ 5 12 13 34 37]print(ages) # [34 12 37 5 13] 
+
+## Slide 25
+25
+Example
+You are given:
+A large dataset X of shape (N, D) ( N = 1,000,000 ,D=128) 
+Find 10 cluster centers of the dataset 
+### Images: ppt/media/image8.png
+
+## Slide 26
+26
+Example
+https://www.kaggle.com/code/cuonghoang12/cluster-numpy/edit
+
+## Slide 27
+27
+Extending Python Using NumPy 
+There is another function used for sorting—argsort(). To understand how it works, it is useful to examine the following code example:
+ages = np.array([34,12,37,5,13])print(ages.argsort()) # [3 1 4 0 2] 
+### Images: ppt/media/image9.png
+
+## Slide 28
+28
+Extending Python Using NumPy 
+What is the real use of argsort()? Imagine that you have three arrays representing a list of people, along with their ages and heights:
+persons = np.array(['Johnny','Mary','Peter','Will','Joe'])ages = np.array([34,12,37,5,13])
+heights = np.array([1.76,1.2,1.68,0.5,1.25]) 
+Suppose that you want to sort this group of people by age. If you simply sortthe ages array by itself, the other two arrays would not be sorted correctly basedon age. This is where argsort() comes in really handy:sort_indices = np.argsort(ages) # performs a sort based on ages# and returns an array of indices# indicating the sort orderOnce the sort indices are obtained, simply feed them into the three arrays:print(persons[sort_indices]) # ['Will' 'Mary' 'Joe' 'Johnny''Peter']print(ages[sort_indices]) # [ 5 12 13 34 37]print(heights[sort_indices]) # [ 0.5 1.2 1.25 1.76 1.68] 
+
+## Slide 29
+29
+Extending Python Using NumPy 
+Array AssignmentWhen assigning NumPy arrays, you have to take note of how arrays are assigned. Following are a number of examples to illustrate this.Copying by ReferenceConsider an array named a1:list1 = [[1,2,3,4], [5,6,7,8]]a1 = np.array(list1)When you try to assign a1 to another variable, a2, a copy of the array is created:a2 = a1 # creates a copy by referenceprint(a1)'''[[1 2 3 4][5 6 7 8]]'''print(a2)'''[[1 2 3 4][5 6 7 8]]'''However, a2 is actually pointing to the original a1. So, any changes made to either array will affect the other as follows:a2[0][0] = 11 # make some changes to a2print(a1) # affects a1'''[[11 2 3 4][ 5 6 7 8]]'''print(a2)'''[[11 2 3 4][ 5 6 7 8]]''' 
+
+## Slide 30
+30
+Extending Python Using NumPy 
+Copying by Value (Deep Copy)If you want to copy an array by value, use the copy() function, as in the following example:list1 = [[1,2,3,4], [5,6,7,8]]a1 = np.array(list1)a2 = a1.copy() # create a copy of a1 by value (deep copy)The copy() function creates a deep copy of the array—it creates a complete copy of the array and its data. When you assign the copy of the array to anothervariable, any changes made to the shape of the original array will not affect its copy. Here’s the proof:a1[0][0] = 11 # make some changes in a1print(a1)'''[[11 2 3 4][ 5 6 7 8]]'''print(a2) # changes is not seen in a2'''[[1 2 3 4][5 6 7 8]]'''a1.shape = 1,-1 # change the shape of a1print(a1)'''[[11 2 3 4 5 6 7 8]]'''print(a2) # a2 does not change shape'''[[1 2 3 4][5 6 7 8]]''' 
+
+## Slide 31
+31
+Example
+You are given:
+A large dataset X of shape (N, D) ( N = 1,000,000 ,D=128) 
+A query vector q of shape (D,) 
+👉 Your task is to implement a fast Top-K search system. (K=5)
+
+## Slide 32
+32
+Example
+https://www.kaggle.com/code/ cuonghoang12 /numpy-serching/edit
+
+# Lecture2.pptx (29 slides)
+SHA-256: dba6ffb58e97200c56fb713e77b0035251d1c2788bd9662ed4478334d5cc4882
+
+## Slide 1
+Data Visualization Using Matplotlib 
+1
+
+## Slide 2
+2
+What Is matplotlib?
+In Python, one of the most commonly used tools for plotting is matplotlib.Matplotlib is a Python 2D plotting library that you can use to produce publication quality charts and figures. Using matplotlib, complex charts and figures can be generated with ease, and its integration with Jupyter Notebook makes it an ideal tool for machine learning. 
+
+## Slide 3
+3
+Plotting Line Charts
+To see how easy it is to use matplotlib, let’s plot a line chart using Jupyter Notebook. Here is a code snippet that plots a line chart:%matplotlib inlineimport matplotlib.pyplot as pltplt.plot([1,2,3,4,5,6,7,8,9,10],[2,4.5,1,2,3.5,2,1,2,3,2]) 
+### Images: ppt/media/image2.png
+
+## Slide 4
+4
+Plotting Multiple Lines in the Same Chart
+You can plot multiple lines in the same chart by calling the plot() function one more time, as the following example shows:%matplotlib inlineimport matplotlib.pyplot as pltfrom matplotlib import stylestyle.use("ggplot")plt.plot([1,2,3,4,5,6,7,8,9,10],[2,4.5,1,2,3.5,2,1,2,3,2])plt.plot([1,2,3,4,5,6,7,8,9,10],[3,4,2,5,2,4,2.5,4,3.5,3]) plt.title("Results") # sets the title for the chartplt.xlabel("Semester") # sets the label to use for the x-axisplt.ylabel("Grade") # sets the label to use for the y-axis 
+### Images: ppt/media/image3.png
+
+## Slide 5
+5
+Plotting Bar ChartsBesides plotting line charts, you can also plot bar charts using matplotlib. Bar charts are useful for comparing data. 
+For example, you want to be able to compare the grades of a student over a number of semesters.Using the same dataset that you used in the previous section, you can plot a bar chart using the bar() function as follows:%matplotlib inlineimport matplotlib.pyplot as pltfrom matplotlib import stylestyle.use("ggplot")plt.bar([1,2,3,4,5,6,7,8,9,10],[2,4.5,1,2,3.5,2,1,2,3,2],label = "Jim",color = "m", # m for magentaalign = "center") plt.title("Results")plt.xlabel("Semester")plt.ylabel("Grade")plt.legend()plt.grid(True, color="y") 
+### Images: ppt/media/image4.png
+
+## Slide 6
+6
+Adding Another Bar to the Chart
+Just like adding an additional line chart to the chart, you can add another bar graph to an existing chart. The following statements in bold do just that:%matplotlib inlineimport matplotlib.pyplot as pltfrom matplotlib import stylestyle.use("ggplot")plt.bar([1,2,3,4,5,6,7,8,9,10],[2,4.5,1,2,3.5,2,1,2,3,2],label = "Jim",color = "m", # for magentaalign = "center",alpha = 0.5) plt.bar([1,2,3,4,5,6,7,8,9,10],[1.2,4.1,0.3,4,5.5,4.7,4.8,5.2,1,1.1],label = "Tim",color = "g", # for greenalign = "center",alpha = 0.5)plt.title("Results")plt.xlabel("Semester")plt.ylabel("Grade")plt.legend()plt.grid(True, color="y") 
+### Images: ppt/media/image5.png
+
+## Slide 7
+7
+Plotting Pie Charts
+Another chart that is popular is the pie chart. A pie chart is a circular statistical graphic divided into slices to illustrate numerical proportions. A pie chart is useful when showing percentage or proportions of data. 
+%matplotlib inlineimport matplotlib.pyplot as pltlabels = ["Chrome", "Internet Explorer","Firefox", "Edge","Safari","Sogou Explorer","Opera","Others"] 
+marketshare = [61.64, 11.98, 11.02, 4.23, 3.79, 1.63, 1.52, 4.19]explode = (0,0,0,0,0,0,0,0)plt.pie(marketshare,explode = explode, # fraction of the radius with which to# offset each wedgelabels = labels,autopct="%.1f%%", # string or function used to label the# wedges with their numeric valueshadow=True,startangle=45) # rotates the start of the pie chart by# angle degrees counterclockwise from the# x-axisplt.axis("equal") # turns off the axis lines and labelsplt.title("Web Browser Marketshare - 2018")plt.show() 
+### Images: ppt/media/image6.png
+
+## Slide 8
+8
+Plotting Scatter PlotsA scatter plot is a two-dimensional chart that uses dots (or other shapes) to represent the values for two different variables. Scatter plots are often used to show how much the value of one variable is affected by another. 
+%matplotlib inlineimport matplotlib.pyplot as pltplt.plot([1,2,3,4], # x-axis[1,8,27,64], # y-axis'bo') # blue circle markerplt.axis([0, 4.5, 0, 70]) # xmin, xmax, ymin, ymaxplt.show() 
+### Images: ppt/media/image7.png
+
+## Slide 9
+9
+Combining Plots
+You can combine multiple scatter plots into one chart as follows:%matplotlib inlineimport matplotlib.pyplot as pltimport numpy as npa = np.arange(1,4.5,0.1) # 1.0, 1.1, 1.2, 1.3...4.4plt.plot(a, a**2, 'y^', # yellow triangle_up marker
+ a, a**3, 'bo', # blue circlea, a**4, 'r--',) # red dashed lineplt.axis([0, 4.5, 0, 70]) # xmin, xmax, ymin, ymaxplt.show( )
+### Images: ppt/media/image8.png
+
+## Slide 10
+10
+Subplots
+You can also plot multiple scatter plots separately and combine them into a single figure:%matplotlib inlineimport matplotlib.pyplot as pltimport numpy as npa = np.arange(1,5,0.1)plt.subplot(121) # 1 row, 2 cols, chart 1plt.plot([1,2,3,4,5],[1,8,27,64,125],'y^')plt.subplot(122) # 1 row, 2 cols, chart 2plt.plot(a, a**2, 'y^',a, a**3, 'bo',a, a**4, 'r--’, )
+plt.axis([0, 4.5, 0, 70]) # xmin, xmax, ymin, ymaxplt.show() 
+### Images: ppt/media/image9.png
+
+## Slide 11
+11
+Example: 
++ Load CIFAR-10+ Flatten images+ Run clustering (NumPy, from scratch)+ Reduce dimension (PCA)+ Plot clusters with Matplotlib
+### Images: ppt/media/image10.png
+
+## Slide 12
+12
+Example: 
+https://www.kaggle.com/code/cuonghoang12/clustering-plot/edit
+
+## Slide 13
+13
+Getting Started with Scikit-learn for Machine Learning
+
+## Slide 14
+14
+Introduction to Scikit-learnInstead of implementing the various machine learning algorithms manually by hand, fortunately, someone else has already done the hard work for you. Introducing Scikit-learn, a Python library that implements the various types of machine learning algorithms, such as classification, regression, clustering, decision tree, and more. Using Scikit-learn, implementing machine learning is now simply a matter of calling a function with the appropriate data so that you can fit and train the model. 
+
+## Slide 15
+15
+1. Toy Datasets (Small & Built-in)
+These are ready-to-use datasets (no download needed):
+Classification datasets
+load_iris() 🌸→ Flower classification (very famous)
+load_digits() 🔢→ Handwritten digit recognition
+load_wine() 🍷→ Wine classification
+load_breast_cancer() 🧬→ Cancer diagnosis (benign vs malignant)
+2.  Real-world Datasets (Need Download)
+These are larger datasets, downloaded automatically:
+fetch_california_housing() 🏠→ House price prediction
+fetch_20newsgroups() 📰→ Text classification (news articles)
+fetch_20newsgroups_vectorized()→ Preprocessed version
+fetch_lfw_people() 👤→ Face recognition (Labeled Faces in the Wild)
+fetch_covtype() 🌲→ Forest cover type classification
+fetch_kddcup99() 🔐→ Network intrusion detection
+fetch_openml() 🌐→ Load datasets from OpenML
+
+## Slide 16
+16
+Types of Algorithms in Scikit-learn
+ 
+Supervised Learning
+Classification:
+Logistic Regression
+Support Vector Machine
+k-Nearest Neighbors
+Regression:
+Linear Regression
+Decision Tree
+Unsupervised Learning
+Clustering:
+K-means clustering
+DBSCAN
+Dimensionality Reduction:
+Principal Component Analysis
+
+## Slide 17
+17
+Advantages & Limitations Advantages
+✔ Simple API✔ Fast for small/medium datasets✔ Great for beginners
+Limitations
+❌ Not ideal for deep learning❌ Limited GPU support
+
+## Slide 18
+18
+Machine Learning Workflow in Scikit-learn
+Typical pipeline:
+1. Load data2. Preprocess data3. Split data4. Train model5. Evaluate model6. Predict
+
+## Slide 19
+19
+Step 1: Import libraries
+from sklearn.datasets import load_irisfrom sklearn.model_selection import train_test_splitfrom sklearn.linear_model import LogisticRegressionfrom sklearn.metrics import accuracy_score
+Step 2: Load dataset
+data = load_iris()X = data.datay = data.target
+Step 3: Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+Step 4: Train model
+model = LogisticRegression()model.fit(X_train, y_train)
+Step 5: Predict
+y_pred = model.predict(X_test)
+Step 6: Evaluate
+print(accuracy_score(y_test, y_pred))
+Classification with linear regression
+
+## Slide 20
+20
+K-mean clustering
+1. Generate Sample Data
+from sklearn.datasets import make_blobs# Create synthetic datasetX, _ = make_blobs(n_samples=300, centers=3, random_state=42)
+👉 This creates:
+300 points
+3 hidden clusters
+2. Apply K-Means
+from sklearn.cluster import KMeans# Create modelkmeans = KMeans(n_clusters=3, random_state=42)# Train modelkmeans.fit(X)
+👉 Since this is clustering:
+No labels needed
+Model finds patterns by itself
+3. Get Results Cluster labels
+labels = kmeans.labels_print(labels[:10])
+Example output:
+[0 2 1 1 0 2 1 0 2 2]
+👉 Each number = cluster ID
+Cluster centers
+centers = kmeans.cluster_centers_print(centers)
+👉 These are the “centers” of each cluster
+4. Visualization (Very Helpful 🔥)
+import matplotlib.pyplot as pltplt.scatter(X[:, 0], X[:, 1], c=labels)plt.scatter(centers[:, 0], centers[:, 1], marker='X', s=200)plt.show()
+
+## Slide 21
+21
+Example
+Using supervised classification techniques from sklearn 
++train on  CIFAR10 train set
++test on CIFAR10 test set
+=> Require accuracy >0.5
+
+## Slide 22
+22
+Example
+https://www.kaggle.com/code/cuonghoang12/sk-classification-cifar10/edit
+
+## Slide 23
+23
+Introduction to OpenCV
+
+## Slide 24
+24
+1. What is OpenCV?
+OpenCV (Open Source Computer Vision Library) is a powerful library used for:
+Image processing
+Video analysis
+Computer vision applications
+=> It works with Python, C++, Java, etc.
+2. Why Use OpenCV?
+✔ Fast and optimized (written in C/C++)✔ Real-time image/video processing✔ Huge community and documentation✔ Works well with AI models
+
+## Slide 25
+25
+3.Applications of OpenCV
+Face recognition
+Object detection
+Self-driving cars
+Medical image analysis
+Security systems
+4. Advantages & Limitations
+Advantages
+✔ Fast and efficient✔ Real-time processing✔ Many built-in algorithms
+Limitations
+❌ Not deep learning-focused❌ Needs combination with PyTorch or TensorFlow for advanced AI
+5. Integration with AI
+ Common pipeline:
+OpenCV → image preprocessing
+Deep learning → prediction
+Example:
+OpenCV reads image
+Model detects objects
+
+## Slide 26
+26
+1. Basic Concepts
+What is an Image?
+👉 An image = matrix of pixels
+Grayscale → 1 channel
+Color → 3 channels (BGR in OpenCV)
+2. Reading and Displaying Image
+import cv2img = cv2.imread("image.jpg")   # Read imagecv2.imshow("Image", img)       # Show imagecv2.waitKey(0)cv2.destroyAllWindows()
+3. Basic Image Operations
+Convert to grayscale
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+Resize
+resized = cv2.resize(img, (300, 300))
+Crop
+crop = img[50:200, 50:200]
+4. Drawing on Image
+cv2.rectangle(img, (50,50), (200,200), (255,0,0), 2)cv2.circle(img, (100,100), 50, (0,255,0), 2)cv2.putText(img, "Hello", (50,50),            cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 
+5. Image Processing Techniques
+Blur (reduce noise)
+blur = cv2.GaussianBlur(img, (5,5), 0)
+Edge detection
+Using Canny edge detection
+edges = cv2.Canny(img, 100, 200)
+6. Thresholding
+_, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+👉 Converts image → black & white
+7. Contour Detection
+contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)cv2.drawContours(img, contours, -1, (0,255,0), 2)
+👉 Used for:
+Shape detection
+Object boundaries
+
+## Slide 27
+27
+8. Working with Video Capture from webcam
+cap = cv2.VideoCapture(0)while True:    ret, frame = cap.read()    cv2.imshow("Webcam", frame)    if cv2.waitKey(1) & 0xFF == ord('q'):        breakcap.release()cv2.destroyAllWindows()
+9. Face Detection Example 
+Using Haar Cascade:
+face_cascade = cv2.CascadeClassifier(    cv2.data.haarcascades + "haarcascade_frontalface_default.xml")gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)faces = face_cascade.detectMultiScale(gray, 1.3, 5)for (x,y,w,h) in faces:    cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)
+
+## Slide 28
+28
+Example:
+Build a system that:=> Detects a document in an image=> Corrects perspective (top-down view)=> Enhances readability (like a scanned PDF)
+### Images: ppt/media/image11.jpg
+
+## Slide 29
+29
+Example:
+https://www.kaggle.com/code/cuonghoang12/document-detection/edit
+
+# Lecture3.pptx (29 slides)
+SHA-256: 14faf0eb3343465bf34a522ee6bdd1956e74a3562d70536cc059f7c71c5bc3b9
+
+## Slide 1
+Important Algorithms in ML
+1
+
+## Slide 2
+Machine Learning
+2
+Supervised Learning
+Unsupervised Learning
+
+## Slide 3
+Supervised Linear Regression
+3
+
+## Slide 4
+4
+1. What is Supervised Learning?
+Supervised learning is a type of machine learning where:
+You have input data (X) and correct output labels (y) 
+The model learns a mapping:
+𝑋→𝑦
+Examples:
+House price prediction (features → price) 
+Student score prediction (study hours → score) 
+2. What is Linear Regression?
+Linear Regression is one of the simplest supervised learning algorithms.
+It assumes a linear relationship between input and output:
+It is to model and predict a continuous numerical value based on input features using a linear relationship.
+Simple Linear Regression (1 feature):
+𝑦=𝑤𝑥+𝑏
+Multiple Linear Regression (many features):
+𝑦=𝑤1𝑥1+𝑤2𝑥2+⋯+𝑤𝑛𝑥𝑛+𝑏
+Or in vector form:
+𝑦=𝐰𝑇𝐱+𝑏
+ 
+
+## Slide 5
+5
+3. Intuition
+The goal is to:=> Find the best line (or hyperplane) that fits the data
+If data is 2D → line 
+If data is 3D → plane 
+Higher dimension → hyperplane
+Component
+Meaning
+(x)
+Input feature(s)
+(y)
+True output
+(w)
+Weights (importance of features)
+(b)
+Bias (offset)
+4. Model Components
+
+## Slide 6
+6
+5. Loss Function (How we measure error)
+We use Mean Squared Error (MSE):
+𝐿=1𝑛𝑖=1𝑛(𝑦𝑖−𝑦𝑖)2
+Where:
+𝑦𝑖: true value 
+𝑦𝑖: predicted value 
+👉 This penalizes large errors more heavily
+6. Training the Model
+Goal:
+Minimize the loss function
+Method 1: Gradient Descent
+Update rules:
+𝑤=𝑤−𝛼𝜕𝐿𝜕𝑤
+𝑏=𝑏−𝛼𝜕𝐿𝜕𝑏
+Where:
+𝛼: learning rate 
+Method 2: Normal Equation (Closed-form)
+𝐰=𝑋𝑇𝑋)−1𝑋𝑇𝑦
+✔ No iteration❌ Expensive for large datasets
+ 
+
+## Slide 7
+7
+Metric
+Formula
+Meaning
+MSE
+avg squared error
+Penalizes large errors
+RMSE
+sqrt(MSE)
+Same unit as output
+MAE
+avg
+y - ŷ
+R² Score
+goodness of fit
+1 = perfect
+6. Evaluation Metrics
+
+## Slide 8
+8
+7. Advantages & Disadvantages
+ 
++ Advantages
+Simple and fast 
+Interpretable 
+Works well for linear relationships 
++ Disadvantages
+Cannot model complex patterns 
+Sensitive to outliers 
+Assumes linearity
+
+## Slide 9
+9
+Example:
+ 
+Given:
+X = 10 * np.random.rand(50, 1)        # 50 random points between 0 and 10
+y = 3 * X + 5 + np.random.randn(50, 1) * 2   # y = 3x + 5 + noise
+Build linear regression from sratch to draw the line.
+### Images: ppt/media/image4.png
+
+## Slide 10
+10
+Example:
+ 
+import numpy as np
+import matplotlib.pyplot as plt
+# ------------------ CREATE DATA ------------------
+np.random.seed(0)
+X = 10 * np.random.rand(50, 1)
+y = 3 * X + 5 + np.random.randn(50, 1) * 2
+# ------------------ ADD BIAS TERM ------------------
+# Convert X -> [1, x]
+X_b = np.c_[np.ones((X.shape[0], 1)), X]
+# ------------------ INITIALIZE PARAMETERS ------------------
+theta = np.random.randn(2, 1)  # [bias, weight]
+# ------------------ HYPERPARAMETERS ------------------
+learning_rate = 0.01
+n_iters = 1000
+# ------------------ GRADIENT DESCENT ------------------
+for i in range(n_iters):
+    gradients = 2 / len(X_b) * X_b.T.dot(X_b.dot(theta) - y)
+    theta = theta - learning_rate * gradients
+print("Weight (slope):", theta[1][0])
+# ------------------ PREDICTION ------------------
+X_line = np.linspace(0, 10, 100).reshape(-1, 1)
+X_line_b = np.c_[np.ones((X_line.shape[0], 1)), X_line]
+y_line = X_line_b.dot(theta)
+# ------------------ PLOT ------------------
+plt.scatter(X, y)
+plt.plot(X_line, y_line)
+plt.xlabel("X")
+plt.ylabel("y")
+plt.title("Linear Regression (From Scratch - Gradient Descent)")
+plt.show()
+# ------------------ RESULT ------------------
+print("Learned parameters (theta):")
+print("Bias (intercept):", theta[0][0])
+
+## Slide 11
+Classification using K-Nearest Neighbor
+11
+
+## Slide 12
+12
+1. What is Classification?
+Classification is a supervised learning task where:
+Input: features 𝑋
+Output: discrete label 𝑦(class) 
+Examples:
+Email → spam / not spam 
+Image → cat / dog 
+Patient → disease / no disease 
+2. What is K-Nearest Neighbors (KNN)?
+KNN is a simple, non-parametric, instance-based algorithm.
+=> It does not learn a model explicitly=> It stores the training data and makes decisions at prediction time
+ 
+
+## Slide 13
+13
+3. Core Idea (Intuition)
+“A data point is classified based on the majority class of its nearest neighbors.”
+Example:
+If K = 3:
+Look at the 3 closest points 
+If 2 are class A and 1 is class B → predict A 
+4. Algorithm Steps
+Given a new input 𝑥:
+Step 1: Choose K
+Number of neighbors 
+Step 2: Compute distances
+Common distance:
+Euclidean distance: 
+𝑑𝑥𝑥𝑖=(𝑥𝑗−𝑥𝑖𝑗)2
+Step 3: Find K nearest neighbors
+Sort by distance 
+Step 4: Voting
+Majority class wins 
+ 
+### Images: ppt/media/image7.png
+
+## Slide 14
+14
+Feature (x)
+Label
+1
+A
+2
+A
+3
+B
+4
+B
+5. Example
+Training Data:
+Predict for x = 2.5, K = 3:
+Nearest neighbors:
+2 (A) 
+3 (B) 
+1 (A) 
+=> Majority = A
+
+## Slide 15
+15
+6. Choosing K
+Small K (e.g., K=1)
+Very sensitive to noise 
+Overfitting 
+Large K
+Smooth decision boundary 
+Underfitting 
+=> Rule of thumb:
+𝐾≈𝑁
+ 
+(N is number of points)
+
+## Slide 16
+16
+7. Important Concept: Feature Scaling 
+KNN is distance-based, so scaling is critical.
+Example:
+Age: 0–100 
+Salary: 0–1,000,000 
+=> Salary dominates distance → wrong results
+Solution:
+Normalize or standardize data 
+8. Decision Boundary
+KNN creates non-linear boundaries 
+Can model complex patterns 
+
+## Slide 17
+17
+9. Advantages
++ Simple and intuitive+ No training phase (lazy learning)+ Works well with small datasets+ Can model complex boundaries
+10. Disadvantages
++ Slow for large datasets (must compute distances)+ Sensitive to noise+ Requires good feature scaling+ Memory intensive
+
+## Slide 18
+18
+Build KNN classification from scratch
+Training set
+# Class 0
+X0 = np.random.randn(50, 2) + [0, 0]
+y0 = np.zeros(50)
+# Class 1
+X1 = np.random.randn(50, 2) + [5, 5]
+y1 = np.ones(50)
+Example
+Testing set
+h = 0.1
+x_min, x_max = X_train[:, 0].min() - 1, X_train[:, 0].max() + 1
+y_min, y_max = X_train[:, 1].min() - 1, X_train[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                     np.arange(y_min, y_max, h))
+grid_points = np.c_[xx.ravel(), yy.ravel()]
+### Images: ppt/media/image9.png
+
+## Slide 19
+19
+https://www.kaggle.com/code/cuonghoang12/knn-classification/edit
+Example
+
+## Slide 20
+Clustering Using K-Means
+20
+
+## Slide 21
+21
+So far, all of the machine learning algorithms that you have seen are supervised learning. That is, the datasets have all been labeled, classified, or categorized.
+Datasets that have been labeled are known as labeled data, while datasets that have not been labeled are known as unlabeled data. 
+### Images: ppt/media/image10.png
+
+## Slide 22
+22
+Unlabeled data, on the other hand, is data without label(s). 
+Given this set of data, you can try to cluster them into groups based on features, and from there you can figure out the average dimension in each group. 
+### Images: ppt/media/image11.png
+
+## Slide 23
+23
+Unsupervised Learning Using K-Means
+Since there is no label in unlabeled data, it is thus of interest to us that we are able to find patterns in that unlabeled data. This technique of finding patterns in unlabeled data is known as clustering. The main aim of clustering is to segregate groups with similar traits and assign them into groups (commonly known as clusters).
+One of the common algorithms used for clustering is the K-Means algorithm.
+K-Means clustering is a type of unsupervised learning:
+■ Used when you have unlabeled data
+■ The goal is to find groups in data, with the number of groups represented by K
+The goal of K-Means clustering is to achieve the following:
+■ K centroids representing the center of the clusters
+■ Labels for the training data
+
+## Slide 24
+24
+How Clustering in K-Means Works
++Suppose you have a series of unlabeled points, as shown in Figure.
++Your job is to cluster all of these points into distinct groups so that you can discover a pattern among them.  
+### Images: ppt/media/image12.png
+
+## Slide 25
+25
+Suppose you want to separate them into twogroups (that is, K=2). The end result would look like Figure 
+### Images: ppt/media/image13.png
+
+## Slide 26
+26
+### Images: ppt/media/image14.png, ppt/media/image15.png, ppt/media/image16.png, ppt/media/image17.png
+
+## Slide 27
+27
+Example
+# Two clusters
+X1 = np.random.randn(50, 2) + [0, 0]
+X2 = np.random.randn(50, 2) + [5, 5]
+Build K-means from scratch to cluster these points
+### Images: ppt/media/image18.png
+
+## Slide 28
+28
+Example
+https://www.kaggle.com/code/cuonghoang12/kmeans-clustering/edit
+
+## Slide 29
+29
+Example
+
+# Lecture4.pptx (30 slides)
+SHA-256: 74b38de34895471d43750c36c847918dfa91137f23e3d08a0f4aa78832161966
+
+## Slide 1
+Deep Learning
+1
+
+## Slide 2
+2
+### Images: ppt/media/image2.png
+
+## Slide 3
+3
+Artificial Intelligence
+Artificial intelligence was born in the 1950s, as a handful of pioneers from the nascentfield of computer science started asking if computers could be made to "think"—aquestion whose ramifications we are still exploring today. A concise definition of thefield would be: . the effort to automate intellectual tasks normally performed by humans 
+
+## Slide 4
+4
+Machine Learning
+Machine Learning (ML) is a subfield of Artificial Intelligence that focuses on developing algorithms and statistical models that enable computers to learn patterns, relationships, and structures from data, and use that learned knowledge to make predictions or decisions without being explicitly programmed for every specific task.
+### Images: ppt/media/image3.png
+
+## Slide 5
+5
+Machine Learning
+A machine learning system is "trained" rather than explicitly programmed. It is presented with many "examples" relevant to a task, and it finds statistical structure in these examples which eventually allows the system to come up with rules for automating the task. For instance, if you wish to automate the task of tagging your vacation pictures, you could present a machine learning system with many examples of pictures already tagged by humans, and the system would learn statistical rules for associating specific pictures to specific tags 
+
+## Slide 6
+6
+Deep Learning
+Deep learning is a specific subfield of machine learning, a new take on learning representations from data which puts an emphasis on learning successive "layers" of increasingly meaningful representations. 
+The "deep" in "deep learning" is not a reference to any kind of "deeper" understanding achieved by the approach, rather, it simply stands for this idea of successive layers of representations—how many layers contribute to a model of the data is called the "depth" of the model.
+Other appropriate names for the field could have been "layered representations learning" or "hierarchical representations learning". Modern deep learning often involves tens or even hundreds of successivelayers of representation—and they are all learned automatically from exposure to training data. 
+Meanwhile, other approaches to machine learning tend to focus on learning only one or two layers of representation of the data. Hence they are sometimes called "shallow learning". 
+
+## Slide 7
+Deep Learning
+7
+### Images: ppt/media/image4.png
+
+## Slide 8
+Deep Learning
+8
+What do the representations learned by a deep learning algorithm look like? Let’s look at how a 3-layer deep network transforms an image of a digit in order to recognizewhat digit it is:As you can see, the network transforms the digit image into representations that are increasingly different from the original image, and increasingly informative about the final result. You can think of a deep network as a multi-stage information distillation operation, where information goes through successive filters and comes out increasingly "purified" (i.e. useful with regard to some task).
+### Images: ppt/media/image5.png
+
+## Slide 9
+Understanding how deep learning works 
+9
+### Images: ppt/media/image6.png
+
+## Slide 10
+Understanding how deep learning works 
+10
+### Images: ppt/media/image7.png
+
+## Slide 11
+Understanding how deep learning works 
+11
+### Images: ppt/media/image8.png
+
+## Slide 12
+12
+In particular, deep learning has achieved the following breakthroughs, all in historically difficult areas of machine learning:
++Near-human level image classification.+Near-human level speech recognition.+Near-human level handwriting transcription.+Improved machine translation.+Improved text-to-speech conversion.+Digital assistants such as Google Now or Amazon Alexa.+Near-human level autonomous driving.+Improved ad targeting, as used by Google, Baidu, and Bing.+Improved search results on the web.+Answering natural language questions.+Superhuman Go playing 
+
+## Slide 13
+13
+Example
+Build neural network from scratch for non-linear regression 
+X = torch.linspace(-3, 3, 400).view(-1, 1)
+y = torch.sin(3*X) + 0.5*torch.cos(5*X) + 0.2*X**2
+y += 0.15 * torch.randn_like(X)  # noise# 
+======================
+# 2. Train / Test Split# 
+======================
+perm = torch.randperm(len(X))
+train_size = int(0.8 * len(X))
+X_train = X[perm[:train_size]]
+y_train = y[perm[:train_size]]
+X_test = X[perm[train_size:]]
+y_test = y[perm[train_size:]]
+plt.scatter(X.numpy(), y.numpy(), s=10, label="Data")
+plt.plot(X.numpy(), y_pred.numpy(), linewidth=3, label="Prediction")
+
+## Slide 14
+14
+Example
+https://www.kaggle.com/code/cuonghoang12/non-linear-regression/edit
+
+## Slide 15
+Neural Network
+15
+
+## Slide 16
+16
+1. What is a Neural Network?
+A Neural Network (NN) is a machine learning model inspired by the human brain.It is designed to learn patterns from data and make predictions.
+=> Think of it as a function approximator:
+𝑓𝑥≈𝑦
+Examples:
+Image → label (cat/dog) 
+Text → sentiment (positive/negative) 
+Input features → price prediction
+ 
+### Images: ppt/media/image10.png
+
+## Slide 17
+17
+### Images: ppt/media/image11.png
+
+## Slide 18
+18
+Input Data
+### Images: ppt/media/image12.png, ppt/media/image13.png
+
+## Slide 19
+19
+2. Basic Structure of a Neural Network
+A neural network is made of layers of neurons:
+🔹 3 main types of layers:
+Input Layer 
+Receives data (features) 
+Example: image pixels, numerical values 
+Hidden Layers 
+Perform computations 
+Extract patterns 
+Output Layer 
+Produces final result
+### Images: ppt/media/image14.png
+
+## Slide 20
+20
+3. Neuron (Perceptron) – The Core Unit
+Each neuron does:
+𝑧=𝑤1𝑥1+𝑤2𝑥2+...+𝑏
+Then applies activation function:
+𝑎=𝜎𝑧
+Where:
+𝑤: weights 
+𝑏: bias 
+𝜎: activation function
+ 
+4. Activation Functions
+They introduce non-linearity (VERY IMPORTANT )
+Common ones:
+1. ReLU (most popular)
+                                               𝑓𝑥=max⁡0𝑥.
+2.Sigmoid
+                                                   𝑓𝑥=11+𝑒−𝑥. 
+3.Tanh
+𝑓𝑥=𝑒𝑥−𝑒−𝑥𝑒𝑥+𝑒−𝑥
+ 
+### Images: ppt/media/image17.png, ppt/media/image18.png, ppt/media/image19.jpeg
+
+## Slide 21
+21
+5. Forward Propagation
+This is how data flows through the network:
+Input → multiply weights → add bias → activation → next layer → output
+Mathematically:
+𝑎𝑙=𝜎𝑊𝑙𝑎𝑙−1+𝑏𝑙
+ 
+6. Loss Function (How the model learns)
+Measures error between prediction and truth.
+Examples:
+Mean Squared Error (MSE) (regression): 
+𝐿=1𝑛(𝑦−𝑦)2
+Cross Entropy (classification)
+ 
+
+## Slide 22
+22
+7. Backpropagation (Core of Learning )
+This is the key algorithm.
+👉 Idea:
+Compute error 
+Propagate error backward 
+Update weights 
+Uses:
+Chain Rule (calculus) 
+Update rule (Gradient Descent):
+𝑤=𝑤−𝜂𝜕𝐿𝜕𝑤
+Where:
+𝜂: learning rate 
+ 
+### Images: ppt/media/image23.png
+
+## Slide 23
+23
+8. Training Process
+Steps:
+Initialize weights randomly 
+Forward pass 
+Compute loss 
+Backpropagation 
+Update weights 
+Repeat (epochs)
+### Images: ppt/media/image24.jpeg
+
+## Slide 24
+24
+9. Types of Neural Networks
+1. Feedforward Neural Network (FNN)
+Basic type 
+No cycles 
+2. Convolutional Neural Network (CNN)
+For images 
+Used in computer vision 
+3. Recurrent Neural Network (RNN)
+For sequences (text, time series) 
+4. Transformers
+Modern NLP models (e.g., ChatGPT) 
+10. Overfitting & Regularization
+Problem:
+Model memorizes training data 
+Solutions:
+Dropout 
+Regularization (L1, L2) 
+More data 
+Early stopping 
+
+## Slide 25
+25
+import numpy as np
+# Input
+X = np.array([[0,0],[0,1],[1,0],[1,1]])
+y = np.array([[0],[1],[1],[0]])  # XOR problem
+# Initialize weights
+np.random.seed(0)
+W1 = np.random.randn(2, 4)
+W2 = np.random.randn(4, 1)
+# Activation
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+11. Simple Python Example (from scratch)
+# Training
+for i in range(10000):
+    # Forward
+    z1 = X.dot(W1)
+    a1 = sigmoid(z1)
+    z2 = a1.dot(W2)
+    y_hat = sigmoid(z2)
+ # Loss derivative
+    error = y_hat - y
+    # Backprop
+    dW2 = a1.T.dot(error)
+    dW1 = X.T.dot((error.dot(W2.T)) * a1 * (1 - a1))
+    # Update
+    W2 -= 0.1 * dW2
+    W1 -= 0.1 * dW1
+print(y_hat)
+
+## Slide 26
+26
+12. Key Intuition (VERY IMPORTANT)
+=> Neural network = stack of linear + nonlinear transformations
+=> It learns:
+edges → shapes → objects (in images) 
+words → meaning → context (in NLP) 
+13. Advantages
++ Can learn complex patterns+ Works for images, text, speech+ State-of-the-art performance
+14. Disadvantages
++ Needs large data+ Computationally expensive+ Hard to interpret
+
+## Slide 27
+27
+Example
+Build neural network (autoencoder) from scratch for clustering
+num_clusters = 10
+points_per_cluster = 100
+X_list = []
+for i in range(num_clusters):    
+	center = torch.randn(2) * 5    
+	cluster = center + 0.5 * torch.randn(points_per_cluster, 2)    
+	X_list.append(cluster)
+X = torch.cat(X_list, dim=0)
+### Images: ppt/media/image25.png
+
+## Slide 28
+28
+Example
+https://www.kaggle.com/code/cuonghoang12/cluster-with-autoencoder/edit
+
+## Slide 29
+29
+Example
+Build a neural network from scratch to classify CIFAR10 dataset 
++Train on train set
++Evaluate on test set
+=> Require accuracy >0.6
+
+## Slide 30
+30
+Example
+https://www.kaggle.com/code/cuonghoang12/neural-network-cifar/edit

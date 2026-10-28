@@ -1,0 +1,15 @@
+.venv/
+.work/
+__pycache__/
+.pytest_cache/
+data/
+models/
+!models/
+models/*
+!models/base/
+!models/base/yolov8s_coco.json
+runs/
+*.pyc
+*.log
+.env
+!.env.example

@@ -1,0 +1,146 @@
+{
+  "checked_date": "2026-10-28",
+  "required_sources": [
+    {
+      "id": 1,
+      "url": "https://universe.roboflow.com/search?q=class%3Adrowning",
+      "type": "dataset_search",
+      "status": "opened; inspected four separate candidates",
+      "decision": "candidate discovery only"
+    },
+    {
+      "id": 2,
+      "url": "https://www.kaggle.com/datasets/alanoudawaji/swimming-and-drowning-dataset",
+      "type": "image_dataset",
+      "status": "Downloaded complete archive; README.dataset.txt, README.roboflow.txt, data.yaml inspected; 130 image/bbox samples reviewed",
+      "version": 2,
+      "archive_bytes_listed": 388922012,
+      "license_declared": "CC BY 4.0 in embedded README.dataset.txt and data.yaml; confirmed on original Roboflow page. Kaggle top-level metadata remains Unknown.",
+      "camera_view": "130 samples reviewed: above-water CCTV, underwater/half-water and stock/mosaic mixed; not full archive approval",
+      "decision": "Prioritize curated above-water training expansion after review and source-group split; substantial overlap with Deep Rescue; do not merge as independent source; no new training in this audit",
+      "archive_bytes": 388922012,
+      "archive_sha256": "54b20dcb7c85c9bf717938e7a5f61c81fbd75ec0af35ffbcc93891ca1bd9f9b1",
+      "images_counted": 9997,
+      "label_files_counted": 9997,
+      "boxes_counted": 18506,
+      "classes": [
+        "Drowning",
+        "Swimming",
+        "out of water"
+      ],
+      "split_counts": {
+        "train": 6014,
+        "valid": 1977,
+        "test": 2006
+      },
+      "original_source": "https://universe.roboflow.com/alanoud/swimming-and-drowning-1jtbi",
+      "original_version": 4
+    },
+    {
+      "id": 3,
+      "url": "https://figshare.com/articles/dataset/Underwater_Drowning_Detection_Dataset/29497235/2",
+      "type": "image_dataset",
+      "status": "primary page and API metadata read; archive not downloaded",
+      "version": 2,
+      "image_count_author_claim": 5613,
+      "license_declared": "CC BY 4.0",
+      "camera_view": "underwater per author",
+      "decision": "excluded from train/validation/test/demo"
+    },
+    {
+      "id": 4,
+      "url": "https://github.com/randhana/Drowning-Detection-",
+      "type": "code_model_video_repository",
+      "status": "README, source, recursive tree, alarm implementation inspected; not executed",
+      "license_declared": "MIT code; original footage rights not verified",
+      "weights_listed": [
+        "model.pth",
+        "lb.pkl"
+      ],
+      "decision": "method reference only"
+    },
+    {
+      "id": 5,
+      "url": "https://www.mdpi.com/1424-8220/25/17/5552",
+      "type": "research_article",
+      "status": "Article, pinned author repository tree, ZIP central directory, embedded metadata and 41 downloaded image/label samples inspected",
+      "data_url": "https://github.com/Mibugi/Drowning-detection",
+      "camera_view": "41 samples include above-water, underwater and stock/film imagery; not approved in full",
+      "decision": "Prioritize curated above-water subset after filtering and grouping; overlap with existing scenes must be checked; no new training performed",
+      "dataset_license_declared": "CC BY 4.0 in embedded README.dataset.txt and data.yaml; custom code/weights license not established",
+      "images_counted": 2000,
+      "label_files_counted": 2000,
+      "split_counts": {
+        "train": 1400,
+        "valid": 400,
+        "test": 200
+      },
+      "weights_listed": [
+        "Module/LiB-YOLO.pt",
+        "Module/yolo11n.pt"
+      ],
+      "followup_report": "docs/SOURCE5_FOLLOWUP.md"
+    },
+    {
+      "id": 6,
+      "url": "https://universe.roboflow.com/nweweq/drowning-detection-rawzc-y0qr2",
+      "type": "image_dataset",
+      "status": "primary overview opened",
+      "images_listed": 264,
+      "dataset_versions": 0,
+      "models": 0,
+      "classes": [
+        "drowning",
+        "swimming"
+      ],
+      "license_declared": "CC BY 4.0",
+      "camera_view": "not verified",
+      "decision": "not selected; no export version verified"
+    },
+    {
+      "id": 7,
+      "url": "https://link.springer.com/article/10.1007/s11227-025-07732-7",
+      "type": "research_article",
+      "status": "full article opened",
+      "data_url": "https://app.roboflow.com/hydrosavex/hydrosavex-dataset/3/images",
+      "camera_view": "underwater camera specified in section 5.1",
+      "decision": "data excluded; temporal/event architecture reference only"
+    }
+  ],
+  "downloaded_research_archives": [
+    {
+      "ref": "deeprescue/drowning-dataset",
+      "url": "https://www.kaggle.com/datasets/deeprescue/drowning-dataset",
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/deeprescue/drowning-dataset",
+      "local_path": "data/research/deeprescue.zip",
+      "bytes": 219926172,
+      "sha256": "df4e71830bfa5850ec6be960da7cd7e8e76b2184a116bde215b0f0d8708e95a0",
+      "archive_entry_count": 9992,
+      "license_declared": "CC0: Public Domain in Kaggle metadata; COCO embedded license Unknown",
+      "status": "downloaded and structure inspected; not blanket-approved for training"
+    },
+    {
+      "ref": "nvbangg/drowning-test",
+      "url": "https://www.kaggle.com/datasets/nvbangg/drowning-test",
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/nvbangg/drowning-test",
+      "local_path": "data/research/nvbangg.zip",
+      "bytes": 42519810,
+      "sha256": "1707c8dfbc59a6296d89514a42c7411af69c347dcd68b9f0ec34985f63b6e2bf",
+      "archive_entry_count": 3,
+      "license_declared": "MIT as uploader declares; original video rights not verified",
+      "status": "downloaded and structure inspected; not blanket-approved for training"
+    },
+    {
+      "ref": "bhushankumarkashyap/drowning",
+      "url": "https://www.kaggle.com/datasets/bhushankumarkashyap/drowning",
+      "download_url": "https://www.kaggle.com/api/v1/datasets/download/bhushankumarkashyap/drowning",
+      "local_path": "data/research/bhushankumarkashyap.zip",
+      "bytes": 49486629,
+      "sha256": "bd4151188fc51186ec5209c8fd3957d01007b267e59bf8867152e081f770aaa4",
+      "archive_entry_count": 3877,
+      "license_declared": "Apache-2.0 as uploader declares; original image rights not verified",
+      "status": "downloaded and structure inspected; not blanket-approved for training"
+    }
+  ],
+  "source_policy": "Primary metadata, author claims and local observations are distinguished. Underwater-camera samples are excluded. Training and evaluation statuses belong to actual run artifacts."
+}
