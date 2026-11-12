@@ -1,0 +1,157 @@
+{
+  "checked_date": "2026-10-29",
+  "scope": "pool_cctv_incident_only",
+  "review_method": "Manual full-timeline contact sheets at one-second intervals including endpoints, with source frame/motion inspection. Sample-based visual review, not a certification of every frame. Source reported incident nature checked against official YouTube videoDetails and oEmbed metadata.",
+  "reviewers": [
+    "research",
+    "lectures"
+  ],
+  "videos": [
+    {
+      "id": "cctv_wavepool_rescue_22",
+      "name": "CCTV bể sóng · tình huống cứu hộ #22",
+      "source_id": "IOHBGgt5oG4",
+      "source_start": 0,
+      "source_end": 30.03,
+      "source_sha256": "1331c15e69fc3ca6947e1fc3ff47512813ff3ed76b0321a19699d1d265409ff7",
+      "review_status": "approved",
+      "above_water": true,
+      "fixed_pool_surveillance": true,
+      "incident_or_rescue_observed": true,
+      "upstream_target_marker_in_interval": false,
+      "camera_evidence": "Continuous stable elevated poolside surveillance framing, no camera pan or handheld movement observed across the complete archive clip. Installation hardware/technical records not provided; original channel identifies the series as rescues at its wavepool.",
+      "review_notes": "Reviewed every second from start to end and at interval boundaries by research and lectures agents. Above-water fixed-view pool incident/rescue; no underwater shot, source scene cut, victim circle, arrow or explanatory source text observed. Keep the complete archive clip; not selected using AI detections. Original longer YouTube time offset unknown. Refined at 0.5-second intervals near transition/contact. Pre-event tube activity0-5s; pink-clad person is partly obscured by tube during loss. Contact is gradual and not a clinical endpoint.",
+      "annotations": [
+        {
+          "start": 6.0,
+          "end": 21.5,
+          "label": "manually_observed_difficulty_before_rescue_contact",
+          "certainty": "approximate observable behavior; onset uncertainty +/- 1.0 seconds; not clinical onset"
+        },
+        {
+          "start": 21.5,
+          "end": 30.03,
+          "label": "visible_lifeguard_contact_and_assistance",
+          "certainty": "manual visual observation; approximate contact +/- 1.0 seconds"
+        }
+      ],
+      "manual_timeline": {
+        "title": "Wavepool Lifeguard Rescue22",
+        "onset_approx_s": 6.0,
+        "onset_uncertainty_s": 1.0,
+        "guard_entry_approx_s": 18.5,
+        "contact_approx_s": 21.0,
+        "contact_uncertainty_s": 1.0,
+        "unassisted_distress_window_s": [
+          6.0,
+          21.5
+        ],
+        "assisted_window_s": [
+          21.5,
+          30.03
+        ],
+        "target_description": "Foreground person in pink swimwear loses the blue tube around5.5-7s, repeatedly submerges/raises arms before lifeguard approaches with yellow flotation.",
+        "notes": "Pre-event tube activity0-5s; pink-clad person is partly obscured by tube during loss. Contact is gradual and not a clinical endpoint."
+      },
+      "manual_timeline_timebase": "Kaggle archive MP4 seconds; original YouTube offset unknown"
+    },
+    {
+      "id": "cctv_wavepool_rescue_19",
+      "name": "CCTV bể sóng · tình huống cứu hộ #19",
+      "source_id": "T5mDQeDkca0",
+      "source_start": 0,
+      "source_end": 29.229200000000002,
+      "source_sha256": "cddf70abe5c22d48265a24d5e6efdb39e040c0d4112661ba63ea6195f0132366",
+      "review_status": "approved",
+      "above_water": true,
+      "fixed_pool_surveillance": true,
+      "incident_or_rescue_observed": true,
+      "upstream_target_marker_in_interval": false,
+      "camera_evidence": "Continuous stable elevated poolside surveillance framing, no camera pan or handheld movement observed across the complete archive clip. Installation hardware/technical records not provided; original channel identifies the series as rescues at its wavepool.",
+      "review_notes": "Reviewed every second from start to end and at interval boundaries by research and lectures agents. Above-water fixed-view pool incident/rescue; no underwater shot, source scene cut, victim circle, arrow or explanatory source text observed. Keep the complete archive clip; not selected using AI detections. Original longer YouTube time offset unknown. Refined at 0.5-second intervals near transition/contact. Onset is ambiguous: initial0-6s may already show difficulty. Do not label lead-in definitively normal or treat6s as medical onset.",
+      "annotations": [
+        {
+          "start": 6.0,
+          "end": 16.5,
+          "label": "manually_observed_difficulty_before_rescue_contact",
+          "certainty": "approximate observable behavior; onset uncertainty +/- 2.0 seconds; not clinical onset"
+        },
+        {
+          "start": 16.5,
+          "end": 29.2292,
+          "label": "visible_lifeguard_contact_and_assistance",
+          "certainty": "manual visual observation; approximate contact +/- 1.0 seconds"
+        }
+      ],
+      "manual_timeline": {
+        "title": "Wavepool Lifeguard Rescue19",
+        "onset_approx_s": 6.0,
+        "onset_uncertainty_s": 2.0,
+        "guard_entry_approx_s": 12.0,
+        "contact_approx_s": 16.0,
+        "contact_uncertainty_s": 1.0,
+        "unassisted_distress_window_s": [
+          6.0,
+          16.5
+        ],
+        "assisted_window_s": [
+          16.5,
+          29.2292
+        ],
+        "target_description": "Swimmer beside the diagonal pool rope makes repeated strokes/vertical bobbing; a lifeguard enters from left and supports the person near center-right.",
+        "notes": "Onset is ambiguous: initial0-6s may already show difficulty. Do not label lead-in definitively normal or treat6s as medical onset."
+      },
+      "manual_timeline_timebase": "Kaggle archive MP4 seconds; original YouTube offset unknown"
+    },
+    {
+      "id": "cctv_wavepool_rescue_13",
+      "name": "CCTV bể sóng · tình huống cứu hộ #13",
+      "source_id": "vt6ZBq5jVec",
+      "source_start": 0,
+      "source_end": 28.4284,
+      "source_sha256": "fe872a2e01ed70fc57acd88c48a1d33493e4b89b61938203d8675e9227f3fd00",
+      "review_status": "approved",
+      "above_water": true,
+      "fixed_pool_surveillance": true,
+      "incident_or_rescue_observed": true,
+      "upstream_target_marker_in_interval": false,
+      "camera_evidence": "Continuous stable elevated poolside surveillance framing, no camera pan or handheld movement observed across the complete archive clip. Installation hardware/technical records not provided; original channel identifies the series as rescues at its wavepool.",
+      "review_notes": "Reviewed every second from start to end and at interval boundaries by research and lectures agents. Above-water fixed-view pool incident/rescue; no underwater shot, source scene cut, victim circle, arrow or explanatory source text observed. Keep the complete archive clip; not selected using AI detections. Original longer YouTube time offset unknown. Refined at 0.5-second intervals near transition/contact. Other swimmers and tube riders remain in view; do not confuse foreground bathers with the upper-center/right rescue target.",
+      "annotations": [
+        {
+          "start": 9.0,
+          "end": 26.5,
+          "label": "manually_observed_difficulty_before_rescue_contact",
+          "certainty": "approximate observable behavior; onset uncertainty +/- 1.0 seconds; not clinical onset"
+        },
+        {
+          "start": 26.5,
+          "end": 28.4284,
+          "label": "visible_lifeguard_contact_and_assistance",
+          "certainty": "manual visual observation; approximate contact +/- 1.0 seconds"
+        }
+      ],
+      "manual_timeline": {
+        "title": "Wavepool Lifeguard Rescue13",
+        "onset_approx_s": 9.0,
+        "onset_uncertainty_s": 1.0,
+        "guard_entry_approx_s": 24.5,
+        "contact_approx_s": 26.5,
+        "contact_uncertainty_s": 1.0,
+        "unassisted_distress_window_s": [
+          9.0,
+          26.5
+        ],
+        "assisted_window_s": [
+          26.5,
+          28.4284
+        ],
+        "target_description": "Upper-center/right person loses a blue tube around9s, then repeatedly submerges and paddles; lifeguard enters from left around24.5s and reaches person with yellow flotation.",
+        "notes": "Other swimmers and tube riders remain in view; do not confuse foreground bathers with the upper-center/right rescue target."
+      },
+      "manual_timeline_timebase": "Kaggle archive MP4 seconds; original YouTube offset unknown"
+    }
+  ],
+  "phase_review_manifest": "data/library/research_cctv/nvbangg_review.json",
+  "provenance_note": "Portable interval review for the pinned Kaggle archive. Review contact sheets and private runtime artifacts are not part of the source repository."
+}

@@ -26,3 +26,24 @@ def test_only_reviewed_clips_inside_library_can_be_registered(tmp_path, monkeypa
     assert library.register_library() == 0
     assert store.get("videos", "good") is None
     assert store.get("videos", "user-upload") is not None
+
+
+def test_relative_clip_paths_work_after_copying_project(tmp_path, monkeypatch):
+    project = tmp_path / "copied-project"
+    data = project / "data"
+    clips = data / "library" / "clips"
+    clips.mkdir(parents=True)
+    (clips / "pool.mp4").write_bytes(b"transport test")
+    (project / "outside.mp4").write_bytes(b"not a reviewed clip")
+    monkeypatch.setattr(library, "ROOT", project)
+    monkeypatch.setattr(library, "DATA", data)
+    monkeypatch.setattr(library, "LIBRARY", data / "library")
+    monkeypatch.setattr(store, "DB", data / "test.sqlite3")
+    records = [
+        {"id": "portable", "path": "data/library/clips/pool.mp4", "url": "/media/library/clips/pool.mp4", "above_water": True},
+        {"id": "escape", "path": "data/library/clips/../../../outside.mp4", "url": "/media/library/clips/outside.mp4", "above_water": True},
+    ]
+    (data / "video_library.json").write_text(json.dumps({"videos": records}), encoding="utf-8")
+    assert library.register_library() == 1
+    assert store.get("videos", "portable")["path"] == str((clips / "pool.mp4").resolve())
+    assert store.get("videos", "escape") is None

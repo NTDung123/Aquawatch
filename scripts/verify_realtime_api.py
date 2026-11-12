@@ -19,9 +19,11 @@ def main():
         video = next(v for v in catalog.json() if v["id"] == args.video_id)
         media = client.get(video["url"], headers={"Range": "bytes=0-1023"})
         assert media.status_code == 206 and len(media.content) == 1024
+        request_started = time.monotonic()
         response = client.post("/api/jobs", json={"video_id": video["id"], "mode": "realtime", "sample_fps": 5,
                                                  "confidence": args.confidence, "camera_mode": video["camera_mode"]})
         response.raise_for_status()
+        accepted_after = time.monotonic() - request_started
         job = response.json()
         observations, partial_seen, last_count = [], False, 0
         started = time.monotonic()
@@ -70,6 +72,8 @@ def main():
         partial = client.get(f"/api/jobs/{cancelled_job['id']}/analysis").json()
         assert partial["partial"] is True and partial["processed_until"] < video["duration"]
         record = {"video": video, "job": first_job, "partial_results_seen_while_running": partial_seen,
+                  "submit_response_seconds": round(accepted_after, 3),
+                  "first_result_from_submit_seconds": round(accepted_after + next(o["wall_seconds"] for o in observations if o["sample_count"] > 0), 3),
                   "observations": observations, "range_status": media.status_code,
                   "cancelled_job": cancelled_job, "cancelled_frontier": partial["processed_until"],
                   "scope": "Real model/video HTTP and source-time causality test; not recognition accuracy or browser UI verification."}

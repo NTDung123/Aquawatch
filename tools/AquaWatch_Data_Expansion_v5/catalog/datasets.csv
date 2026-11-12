@@ -1,0 +1,10 @@
+source_id,workspace,project,version,role,images_reported,declared_license,source_url,notes
+abdos,abdos-workspace-totgi,swimming-drowning-ed3dl,1,direct_candidate,14466,CC BY 4.0,https://universe.roboflow.com/abdos-workspace-totgi/swimming-drowning-ed3dl,Two classes; significant overlap with prior Roboflow exports possible; verify
+se_v1,se-zgnpx,swimming-drowning,1,direct_candidate,520,CC BY 4.0,https://universe.roboflow.com/se-zgnpx/swimming-drowning,Three classes; skip images containing out-of-water boxes; choose minimally augmented version
+foiaxlc,foiaxlc,drownings-test,1,direct_candidate,644,CC BY 4.0,https://universe.roboflow.com/foiaxlc/drownings-test,Three classes; skip images containing out-of-water boxes
+first368,first-d0cuw,drowning-detection-g996n-e0osd,1,direct_candidate,368,CC BY 4.0,https://universe.roboflow.com/first-d0cuw/drowning-detection-g996n-e0osd/dataset/1,Two-class relatively small source; check duplicates
+swimsecure,project-v8ej1,swimsecure,1,proxy_not_direct,14035,CC BY 4.0,https://universe.roboflow.com/project-v8ej1/swimsecure,person_distress and person_normal are NOT necessarily drowning and swimming
+university,university-g3h71,swimming-and-drowning-detection,1,direct_candidate,7295,CC BY 4.0,https://universe.roboflow.com/university-g3h71/swimming-and-drowning-detection,Likely mirrored across many Roboflow projects; avoid downloading multiple mirrors
+pool_pose,pool-safety,pool-drowning-detection,1,pose_manual_only,58,CC BY 4.0,https://universe.roboflow.com/pool-safety/pool-drowning-detection,Pose-class mapping needs manual review; not imported automatically
+AquaSurVai,aquasurvai,drowning-detection-bwe2j,2,dirty_labels_manual_only,176,CC BY 4.0,https://universe.roboflow.com/aquasurvai/drowning-detection-bwe2j,Extra metadata strings appear as classes; not imported automatically
+person_water,drowning-detection,person-detection-in-water,1,aux_person_only,4474,CC BY 4.0,https://universe.roboflow.com/drowning-detection/person-detection-in-water/dataset/1,Person-in-water class cannot directly map to drowning or swimming

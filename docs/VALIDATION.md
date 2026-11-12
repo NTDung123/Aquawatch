@@ -1,5 +1,7 @@
 # Kết quả kiểm thử và phần chưa đạt
 
+**Cập nhật 29/10/2026:** model hiện triển khai là `surface_v4_continue30_threads` trên bộ1.313 ảnh; thư viện hiện chỉ3 clip CCTV bể bơi và giao diện chọn video tự chạy. Số đo mới và phần chưa kiểm chứng nằm ở [AUTOSTART_CCTV.md](AUTOSTART_CCTV.md). Nội dung dưới đây giữ nguyên để truy vết **thử nghiệm legacy192 ảnh/8 epoch**, không mô tả phiên bản hiện tại.
+
 Ngày thực hiện: **28/10/2026, giờ Việt Nam**. Mọi số dưới đây lấy từ artifact trên máy; không lấy số của bài báo/nhà cung cấp làm kết quả dự án.
 
 ## 1. Tự fine-tune đã thực hiện

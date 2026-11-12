@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from . import store
-from .settings import DATA, LIBRARY
+from .settings import DATA, LIBRARY, ROOT
 
 
 def register_library():
@@ -13,7 +13,11 @@ def register_library():
     for record in content.get("videos", []):
         if record.get("above_water") is not True:
             continue
-        path = Path(record["path"]).resolve()
+        recorded_path = record.get("path")
+        if not isinstance(recorded_path, str) or not recorded_path:
+            continue
+        path = Path(recorded_path)
+        path = (path if path.is_absolute() else ROOT / path).resolve()
         if not path.is_relative_to((LIBRARY / "clips").resolve()) or not path.is_file():
             continue
         if record.get("url") != "/media/library/clips/" + path.name:

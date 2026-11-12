@@ -12,6 +12,7 @@ from aquawatch import api, jobs, store
 
 @pytest.fixture
 def isolated_client(tmp_path, monkeypatch):
+    monkeypatch.setattr(api.app.state, "warmup_model", False, raising=False)
     monkeypatch.setattr(api, "register_library", lambda: 0)
     videos = tmp_path / "videos"
     results = tmp_path / "results"
@@ -23,6 +24,7 @@ def isolated_client(tmp_path, monkeypatch):
     monkeypatch.setattr(api, "VIDEOS", videos)
     monkeypatch.setattr(api, "RESULTS", results)
     monkeypatch.setattr(api, "MODEL", model)
+    monkeypatch.setattr(api, "selected_model", lambda: model)
     for route in api.app.routes:
         if getattr(route, "path", None) == "/media/videos":
             monkeypatch.setattr(route.app, "directory", str(videos))
@@ -153,6 +155,21 @@ def test_busy_job_rejects_second_submission(isolated_client, monkeypatch):
     store.put("jobs", {"id": "busy", "status": "running", "video": video})
     monkeypatch.setattr(jobs, "submit", lambda *args: pytest.fail("No background worker may be started"))
     assert client.post("/api/jobs", json={"video_id": video["id"]}).status_code == 409
+
+
+def test_finetuned_checkpoint_does_not_require_community_baseline(isolated_client, monkeypatch, tmp_path):
+    client, videos, _ = isolated_client
+    video = seed_video(videos)
+    api.MODEL.unlink()
+    fine = tmp_path / "finetuned.pt"
+    fine.write_bytes(b"test checkpoint")
+    monkeypatch.setattr(api, "selected_model", lambda: fine)
+    monkeypatch.setattr(jobs, "submit", lambda source, config: {
+        "id": "fine-only", "status": "queued", "video": source, "config": config,
+    })
+    assert client.post("/api/jobs", json={"video_id": video["id"]}).status_code == 202
+    fine.unlink()
+    assert client.post("/api/jobs", json={"video_id": video["id"]}).status_code == 503
 
 
 def test_job_submission_preserves_config_and_redacts_path(isolated_client, monkeypatch):

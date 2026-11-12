@@ -1,7 +1,8 @@
-"""Download the pinned community checkpoint and public-domain rescue footage."""
+"""Verify the bundled fine-tuned checkpoint; download optional reference assets explicitly."""
 import hashlib
 import json
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 import urllib.request
 
@@ -34,17 +35,44 @@ def digest(path):
     return result.hexdigest()
 
 
+def verify_finetuned():
+    checkpoint = ROOT / "models/finetuned/weights/best.pt"
+    record_path = ROOT / "data/training_record.json"
+    if not checkpoint.is_file() or not record_path.is_file():
+        raise RuntimeError("Bundled fine-tuned checkpoint or training record is missing. Re-download the full repository, or explicitly use --baseline for the community model.")
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    checksum = digest(checkpoint)
+    if record.get("status") != "completed" or checksum != record.get("best_model_sha256"):
+        raise RuntimeError("Fine-tuned checkpoint does not match its completed training record. Restore both files from the same repository revision.")
+    print(f"Verified fine-tuned checkpoint: {checkpoint.stat().st_size} bytes, SHA256 {checksum}")
+    return {"path": checkpoint.relative_to(ROOT).as_posix(), "sha256": checksum,
+            "bytes": checkpoint.stat().st_size, "source": "Bundled locally fine-tuned checkpoint and matching data/training_record.json",
+            "preprocessing": record.get("deployment", {}).get("preprocessing", "letterbox"),
+            "limitations": "Academic research model; image validation is not independent event-level rescue accuracy."}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baseline", action="store_true", help="Explicitly download the pinned community baseline. The app still prefers a valid bundled fine-tuned checkpoint.")
+    parser.add_argument("--example-video", action="store_true", help="Also download the historical public-domain beach rescue reference; it is not a reviewed pool CCTV library item.")
     parser.add_argument("--research-data", action="store_true", help="Also download the three research archives; they are not automatically approved training inputs.")
     args = parser.parse_args()
-    assets = list(ASSETS)
+    assets, records = [], []
+    if args.baseline:
+        assets.append(ASSETS[0])
+        try:
+            records.append(verify_finetuned())
+        except (OSError, ValueError, RuntimeError) as error:
+            print(f"Using explicitly requested community fallback: {error}")
+    else:
+        records.append(verify_finetuned())
+    if args.example_video:
+        assets.append(ASSETS[1])
     if args.research_data:
         catalog = json.loads((ROOT / "docs/sources.json").read_text(encoding="utf-8"))
         for entry in catalog["downloaded_research_archives"]:
             assets.append({"path": entry["local_path"], "url": entry["download_url"], "sha256": entry["sha256"], "source": entry["url"], "license": entry["license_declared"], "limitations": entry["status"]})
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    records = []
+    opener = urllib.request.build_opener()
     for asset in assets:
         destination = ROOT / asset["path"]
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -64,7 +92,7 @@ def main():
         print(f"Verified {asset['path']}: {destination.stat().st_size} bytes, SHA256 {checksum}")
     manifest = ROOT / "data" / "asset_manifest.json"
     manifest.parent.mkdir(parents=True, exist_ok=True)
-    manifest.write_text(json.dumps({"checked_date": "2026-10-28", "assets": records}, ensure_ascii=False, indent=2), encoding="utf-8")
+    manifest.write_text(json.dumps({"checked_utc": datetime.now(timezone.utc).isoformat(), "assets": records}, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,10 @@
 # Tài nguyên tải về và nguồn gốc
 
-Kiểm tra nguồn công khai ngày 28/10/2026. Chạy `python scripts/fetch_assets.py` để tải lại đúng tài nguyên; `data/asset_manifest.json` ghi dung lượng, URL và SHA-256 thực tế sau tải.
+Phân phối hiện tại, cập nhật **12/11/2026**: checkpoint fine-tune `models/finetuned/weights/best.pt` và `data/training_record.json` được kèm Git. `python scripts/fetch_assets.py` mặc định kiểm tra SHA-256 model này, không cần tải baseline hoặc video biển. `data/asset_manifest.json` ghi các tài nguyên đã kiểm tra.
+
+`--baseline` tải thêm checkpoint cộng đồng; `--example-video` tải footage biển lịch sử bên dưới. Hai tùy chọn này không thay thư viện CCTV chính. Để tạo thư viện ba video mẫu, dùng `SETUP.ps1 -SampleVideos` hoặc `python scripts/fetch_cctv_library.py --activate`; cấu hình duyệt tại `assets/cctv_library_review.json`, nguồn Kaggle ghim phiên bản 2 và checksum. Xem [hướng dẫn cài](INSTALL.md).
+
+Các ghi chú nguồn baseline/footage dưới đây được khảo sát ngày 28/10/2026; chúng mô tả các tài nguyên tham khảo tùy chọn, không phải checkpoint fine-tune đang triển khai.
 
 ## Checkpoint cộng đồng
 

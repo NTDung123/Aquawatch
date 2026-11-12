@@ -16,11 +16,14 @@ const REASONS = {
 };
 const state = {
   videos: [], selected: null, job: null, analysis: null, jobs: [], polygon: [], drawing: false,
-  audio: null, audioEnabled: false, volume: 0.25, notificationEnabled: false,
+  audio: null, audioEnabled: true, audioMutedByUser: false, audioBlocked: false, audioError: '', audioNeedsReplay: false,
+  audioActivation: 0, audioDeliverySerial: 0, audioLastByEvent: new Map(), signalNotified: new Set(),
+  lastAlarmAt: -Infinity, lastAlarmLevel: 0, lastNonZeroVolume: .25, volume: 0.25, notificationEnabled: false,
   notified: new Set(), alarmNodes: new Set(), seeking: false, lastRender: 0, sampleIndex: -1, pollTimer: null,
   modelReady: false, uploading: false, submitting: false, toastTimer: null, eventSignature: '', acked: new Set(),
   realtimeStarting: false, playbackIntent: false, bufferPaused: false, playPending: false, playBlocked: false,
-  generation: 0, lastSeekToast: 0
+  generation: 0, lastSeekToast: 0, serverJob: null, transition: Promise.resolve(), switching: false,
+  phase: '', recommendedConfidence: .4, modelLoaded: false
 };
 const video = $('video');
 const canvas = $('overlay');
@@ -57,7 +60,9 @@ async function api(path, options = {}) {
   try { body = await response.json(); } catch (_) { body = null; }
   if (!response.ok) {
     const detail = body?.detail;
-    throw new Error(typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : `Lỗi máy chủ ${response.status}`);
+    const error = new Error(typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : `Lỗi máy chủ ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
   return body;
 }
@@ -65,7 +70,8 @@ function jsonOptions(data) {
   return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
 }
 function activeJob() { return state.job && ['queued', 'running'].includes(state.job.status); }
-function isBusy() { return Boolean(activeJob() || state.uploading || state.submitting); }
+function isBusy() { return Boolean(activeJob() || state.uploading || state.submitting || state.switching); }
+function unsupportedSource(item) { return item && (item.camera_mode === 'handheld' || item.above_water === false || item.view === 'underwater' || (item.environment && item.environment !== 'pool')); }
 function isRealtime() { return state.realtimeStarting || state.job?.config?.mode === 'realtime'; }
 function hasFrontier() { return isRealtime() && (state.realtimeStarting || state.analysis?.partial !== false || activeJob()); }
 function processedUntil() {
@@ -78,29 +84,31 @@ function playbackCeiling() {
 }
 function updateControls() {
   const busy = isBusy();
-  const unsupportedSource = state.selected?.camera_mode === 'handheld' || state.selected?.above_water === false || state.selected?.view === 'underwater';
-  $('analyze').disabled = busy || unsupportedSource || !state.selected || !$('above-water').checked || !state.modelReady || state.drawing;
-  $('file-input').disabled = busy;
-  $('video-select').disabled = busy;
-  $('job-select').disabled = busy;
-  $('draw-region').disabled = !state.selected || busy || Boolean(state.analysis);
-  $('clear-region').disabled = !state.polygon.length || busy || Boolean(state.analysis);
+  $('analyze').disabled = busy || unsupportedSource(state.selected) || !state.selected || state.drawing;
+  $('file-input').disabled = false;
+  $('video-select').disabled = false;
+  $('job-select').disabled = false;
+  $('draw-region').disabled = !state.selected || busy;
+  $('clear-region').disabled = !state.polygon.length || busy;
   $('camera-mode').disabled = Boolean(busy);
   $('environment').disabled = Boolean(busy);
-  $('above-water').disabled = Boolean(busy);
   $('sample-fps').disabled = Boolean(busy);
   $('confidence').disabled = Boolean(busy);
   $('analysis-mode').disabled = Boolean(busy);
+  $('cancel-job').disabled = !activeJob();
   const realtime = $('analysis-mode').value === 'realtime';
-  $('analysis-hint').textContent = busy ? (isRealtime() ? 'AI phân tích từng phần; video tự chờ khi chưa có kết quả.' : 'Đang phân tích toàn bộ video trên máy…') : unsupportedSource ? 'Nguồn này nằm ngoài phạm vi camera giám sát trên mặt nước; chỉ có thể xem tham khảo.' : !state.selected ? 'Chọn video và xác nhận góc quay để bắt đầu.' : !$('above-water').checked ? 'Cần xác nhận góc quay trên mặt nước.' : !state.modelReady ? 'Model chưa sẵn sàng. Kiểm tra phần cài đặt trên máy chủ.' : realtime ? 'Phát lại video theo thời gian thực. Không kết nối camera vật lý.' : 'Phân tích xong toàn bộ trước khi xem kết quả.';
-  $('analyze').innerHTML = realtime ? '<span>▷</span> Bắt đầu giám sát' : state.analysis ? '<span>↻</span> Phân tích lại toàn bộ' : '<span>▷</span> Phân tích toàn bộ';
+  $('analysis-hint').textContent = state.phase || (busy ? 'AI đang theo dõi video; bạn có thể chọn clip khác bất kỳ lúc nào.' : unsupportedSource(state.selected) ? 'Nguồn này nằm ngoài phạm vi CCTV bể bơi trên mặt nước; chỉ có thể xem lại.' : !state.selected ? 'Chỉ cần chọn hoặc tải video CCTV bể bơi để tự động nhận diện.' : 'Chọn video sẽ tự giám sát. Các tùy chọn dưới đây chỉ dùng khi cần phân tích lại.');
+  $('analyze').innerHTML = '<span>↻</span> Áp dụng & phân tích lại';
   $('mode-description').textContent = realtime ? 'Phát lại video có sẵn như một luồng CCTV. AI cập nhật từng phần trong khi video phát.' : 'Xử lý nhanh toàn bộ video rồi phát lại. Có thể xem lại các sự kiện sau khi hoàn tất.';
-  document.querySelectorAll('.library-pick').forEach((button) => { button.disabled = Boolean(busy); });
+  document.querySelectorAll('.library-pick').forEach((button) => { button.disabled = false; });
 }
 async function loadStatus() {
   try {
     const status = await api('/api/status');
     state.modelReady = Boolean(status.model?.ready);
+    state.modelLoaded = Boolean(status.model?.loaded ?? status.model?.ready);
+    const recommended = Number(status.model?.recommended_confidence);
+    if (Number.isFinite(recommended) && recommended >= .15 && recommended <= .95) state.recommendedConfidence = recommended;
     $('server-dot').style.background = '#13b798';
     $('server-label').textContent = 'Máy chủ đang hoạt động';
     $('metric-model').textContent = status.model?.ready ? (status.model.name || 'Model sẵn sàng') : 'Chưa có model';
@@ -115,19 +123,24 @@ async function loadStatus() {
     $('metric-device').textContent = 'Kiểm tra máy chủ local';
   }
   updateControls();
+  return state.modelReady;
 }
-async function loadVideos(selectId = null) {
+function renderVideoSelect() {
+  const items = state.videos.filter((item) => item.library || item.id === state.selected?.id);
+  if (state.selected && !items.some((item) => item.id === state.selected.id)) items.push(state.selected);
+  $('video-select').innerHTML = '<option value="">Chọn CCTV bể bơi · tự nhận diện</option>' + items.map((item) => `<option value="${escapeHTML(item.id)}">${escapeHTML(item.name)}${item.library ? '' : ' · video của bạn'}</option>`).join('');
+  $('video-select').value = state.selected?.id || '';
+}
+async function loadVideos() {
   const response = await api('/api/videos');
   state.videos = Array.isArray(response) ? response : response.videos || [];
-  const selectedId = selectId || state.selected?.id || '';
-  $('video-select').innerHTML = '<option value="">Chọn video có sẵn</option>' + state.videos.map((item) => `<option value="${escapeHTML(item.id)}">${escapeHTML(item.name)}</option>`).join('');
-  $('video-select').value = selectedId;
+  renderVideoSelect();
   renderLibrary();
-  if (selectId) selectVideo(state.videos.find((item) => item.id === selectId));
 }
 function safeLink(value) { try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch (_) { return ''; } }
 function searchText(value) { return String(value ?? '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replaceAll('đ', 'd'); }
 function cameraLabel(item) {
+  if (item.camera_type?.toLowerCase().includes('cctv')) return 'CCTV bể bơi · góc nhìn cố định';
   if (item.camera_type === 'visually_stable_shore_view_mount_unknown') return 'Góc nhìn ổn định · chưa xác minh vị trí lắp';
   if (item.camera_type?.includes('mount_unknown')) return 'Góc nhìn xoay / zoom · chưa xác minh vị trí lắp';
   return item.camera_mode === 'fixed' ? 'Camera cố định theo khai báo' : item.camera_mode === 'ptz' ? 'Camera PTZ theo khai báo' : item.camera_mode === 'handheld' ? 'Ghi hình cầm tay' : 'Chưa xác minh camera';
@@ -149,15 +162,16 @@ function renderLibrary() {
   const query = searchText($('library-search').value.trim());
   const camera = $('library-camera').value;
   const role = $('library-role').value;
-  const items = state.videos.filter((item) => (camera === 'all' || item.camera_mode === camera) && (role === 'all' || videoRole(item) === role) && searchText([item.name, item.category, item.scenario, item.source, item.credit, item.license, item.benchmark_role, SCENARIOS[item.category || item.scenario]].join(' ')).includes(query));
-  $('library-count').textContent = `${items.length}/${state.videos.length}`;
+  const library = state.videos.filter((item) => item.library);
+  const items = library.filter((item) => (camera === 'all' || item.camera_mode === camera) && (role === 'all' || videoRole(item) === role) && searchText([item.name, item.category, item.scenario, item.source, item.credit, item.license, item.benchmark_role, SCENARIOS[item.category || item.scenario]].join(' ')).includes(query));
+  $('library-count').textContent = `${items.length}/${library.length}`;
   if (!items.length) { $('library-grid').innerHTML = '<p class="library-empty">Chưa có video phù hợp. Bạn có thể tải video riêng trong mục Nguồn video.</p>'; return; }
   $('library-grid').innerHTML = items.map((item) => {
     const source = safeLink(item.source_url);
     const itemRole = videoRole(item);
     const roleLabel = SCENARIOS[item.category || item.scenario] || (itemRole === 'negative' ? 'Bơi / cảnh không sự cố' : itemRole === 'positive' ? 'Nguy cơ / cứu hộ' : 'Chưa có nhãn chuẩn');
     const thumb = item.thumbnail_url || item.poster_url;
-    return `<article class="library-card${state.selected?.id === item.id ? ' selected' : ''}"><button class="library-pick" data-video-id="${escapeHTML(item.id)}"${isBusy() ? ' disabled' : ''} aria-label="Chọn ${escapeHTML(item.name)}"><div class="library-preview">${thumb ? `<img src="${escapeHTML(thumb)}" alt="Khung hình video ${escapeHTML(item.name)}" loading="lazy">` : `<video src="${escapeHTML(item.url)}" muted playsinline preload="metadata" tabindex="-1" aria-hidden="true"></video>`}<span class="library-play">▷</span><time>${timeText(item.duration)}</time></div><div class="library-card-copy"><span class="library-camera">${escapeHTML(cameraLabel(item))}</span><h3>${escapeHTML(item.name)}</h3><p class="library-role ${itemRole}">${escapeHTML(roleLabel)}</p><small class="library-nature">${escapeHTML(NATURES[item.nature] || (item.library ? 'Video nguồn công khai đã sàng lọc' : 'Video người dùng'))}${Number(item.scene_cuts) > 0 ? ` · ${Number(item.scene_cuts)} lần cắt cảnh` : ''}</small></div></button><div class="library-rights"><span title="${escapeHTML(item.credit || item.source || '')}">${escapeHTML(item.license || 'Quyền sử dụng do người tải chịu trách nhiệm')}</span>${source ? `<a href="${escapeHTML(source)}" target="_blank" rel="noopener">Nguồn ↗</a>` : ''}</div></article>`;
+    return `<article class="library-card${state.selected?.id === item.id ? ' selected' : ''}"><button class="library-pick" data-video-id="${escapeHTML(item.id)}" aria-label="Chọn ${escapeHTML(item.name)}"><div class="library-preview">${thumb ? `<img src="${escapeHTML(thumb)}" alt="Khung hình video ${escapeHTML(item.name)}" loading="lazy">` : `<video src="${escapeHTML(item.url)}" muted playsinline preload="metadata" tabindex="-1" aria-hidden="true"></video>`}<span class="library-play">▷</span><time>${timeText(item.duration)}</time></div><div class="library-card-copy"><span class="library-camera">${escapeHTML(cameraLabel(item))}</span><h3>${escapeHTML(item.name)}</h3><p class="library-role ${itemRole}">${escapeHTML(roleLabel)}</p><small class="library-nature">${escapeHTML(NATURES[item.nature] || (item.library ? 'Video nguồn công khai đã sàng lọc' : 'Video người dùng'))}${Number(item.scene_cuts) > 0 ? ` · ${Number(item.scene_cuts)} lần cắt cảnh` : ''}</small></div></button><div class="library-rights"><span title="${escapeHTML(item.credit || item.source || '')}">${escapeHTML(item.license || 'Quyền sử dụng do người tải chịu trách nhiệm')}</span>${source ? `<a href="${escapeHTML(source)}" target="_blank" rel="noopener">Nguồn ↗</a>` : ''}</div></article>`;
   }).join('');
 }
 async function loadJobs() {
@@ -190,26 +204,9 @@ async function loadAnalysis(job, reset = false) {
   enforceBuffer();
   updateStreamStatus();
 }
-async function restoreJob(id) {
-  if (!id || isBusy()) return;
-  try {
-    const job = await api(`/api/jobs/${encodeURIComponent(id)}`);
-    const source = state.videos.find((item) => item.id === job.video?.id) || job.video;
-    if (!source?.url) throw new Error('Không tìm thấy video gốc của phiên phân tích.');
-    selectVideo(source);
-    state.job = job;
-    $('job-select').value = id;
-    $('camera-mode').value = job.config?.camera_mode || source.camera_mode || 'fixed';
-    $('analysis-mode').value = job.config?.mode || 'batch';
-    $('sample-fps').value = String(job.config?.sample_fps || 5);
-    $('confidence').value = String(job.config?.confidence || .4);
-    $('confidence-value').textContent = Number($('confidence').value).toFixed(2);
-    updateMode();
-    if (job.status === 'completed') await loadAnalysis(job, true);
-    else if (['running', 'queued'].includes(job.status)) { $('analysis-progress').hidden = false; await pollJob(); }
-    else { try { await loadAnalysis(job, true); } catch (_) { /* A failed early job may have no snapshot. */ } showNotice(job.error || `Phiên này ${job.status === 'cancelled' ? 'đã được hủy' : 'chưa hoàn tất'}. Chỉ xem được phần đã phân tích.`, job.status === 'failed'); }
-    updateControls();
-  } catch (error) { showNotice(`Không mở được kết quả đã lưu: ${error.message}`, true); }
+function restoreJob(id) {
+  if (!id) return Promise.resolve();
+  return queueAction({ kind: 'history', jobId: id, mode: 'batch' });
 }
 function updatePerformance() {
   const summary = state.analysis?.summary;
@@ -245,7 +242,7 @@ function enforceBuffer() {
     state.bufferPaused = true;
     if (!video.paused) video.pause();
     if (!activeJob() && !state.realtimeStarting) state.playbackIntent = false;
-  } else if (state.bufferPaused && state.playbackIntent && !state.playBlocked && (available >= .8 || !bounded || (!activeJob() && available > .15))) {
+  } else if (state.bufferPaused && state.playbackIntent && !state.playBlocked && (available >= .3 || !bounded || (!activeJob() && available > .15))) {
     state.bufferPaused = false;
     attemptPlay();
   }
@@ -259,22 +256,24 @@ function updateStreamStatus() {
   const elapsed = Number(state.analysis?.source_elapsed_seconds ?? state.job?.source_elapsed_seconds) || 0;
   const lag = watermark >= 0 ? Math.max(0, elapsed - watermark) : 0;
   const stopped = !activeJob() && !state.realtimeStarting && state.analysis?.partial;
-  $('stream-label').textContent = state.playBlocked ? 'Cần nhấn phát trên thiết bị' : stopped && available < .1 ? 'Đã hết phần kết quả được lưu' : state.bufferPaused ? 'Đang chờ kết quả AI' : !state.playbackIntent && video.paused ? 'Đã tạm dừng giám sát' : 'CCTV phát lại · đang giám sát';
+  $('stream-label').textContent = state.phase || (state.playBlocked ? 'Cần nhấn phát trên thiết bị' : stopped && available < .1 ? 'Đã hết phần kết quả được lưu' : watermark < 0 ? 'AI đang khởi động · chờ kết quả đầu tiên' : state.bufferPaused ? 'Đang chờ kết quả AI' : !state.playbackIntent && video.paused ? 'Đã tạm dừng giám sát' : 'CCTV phát lại · đang giám sát');
   $('stream-detail').textContent = watermark < 0 ? 'Đang khởi tạo model và chờ mẫu đầu tiên. Không kết nối camera vật lý.' : `AI đến ${timeText(watermark)} · bộ đệm ${available.toFixed(1)}s · trễ xử lý ${lag.toFixed(1)}s · ${state.analysis?.samples?.length || 0} mẫu`;
   $('stream-indicator').className = `buffer-dot${state.bufferPaused || state.playBlocked ? ' waiting' : ''}`;
   $('stream-play').textContent = state.playBlocked ? 'Nhấn để phát' : state.playbackIntent ? 'Tạm dừng phát' : 'Phát giám sát';
   $('playback-state').textContent = state.bufferPaused ? 'Chờ AI · video không vượt phần đã phân tích' : video.paused ? 'Đã tạm dừng · kết quả tiếp tục được lưu' : 'Đang phát lại CCTV theo thời gian video';
 }
-function selectVideo(item) {
-  if (isBusy()) return;
+function showVideo(item) {
   video.pause();
-  state.generation += 1;
   clearTimeout(state.pollTimer);
   state.selected = item || null;
   state.job = null;
   state.analysis = null;
   state.polygon = [];
   state.notified.clear();
+  state.audioLastByEvent.clear();
+  state.signalNotified.clear();
+  state.lastAlarmAt = -Infinity;
+  state.lastAlarmLevel = 0;
   state.acked.clear();
   state.eventSignature = '';
   state.sampleIndex = -1;
@@ -294,7 +293,6 @@ function selectVideo(item) {
   $('empty-video').hidden = Boolean(item);
   $('video-wrap').hidden = !item;
   $('source-info').hidden = !item;
-  $('above-water').checked = false;
   if (item) {
     $('video-select').value = item.id;
     video.src = item.url;
@@ -320,34 +318,160 @@ function selectVideo(item) {
   updateMode();
   renderFrame(true);
   updateControls();
+  renderVideoSelect();
   renderLibrary();
   showNotice('');
+  updateAudioUI();
 }
-async function uploadFile(file) {
-  if (!file || isBusy()) return;
-  if (!$('above-water').checked) {
-    showNotice('Trước khi tải lên, hãy xác nhận video được ghi bằng camera ở phía trên mặt nước.');
-    $('above-water').focus();
-    $('file-input').value = '';
-    return;
+function uploadFile(file) {
+  if (!file) return Promise.resolve();
+  $('file-input').value = '';
+  return queueAction({ kind: 'upload', file, mode: 'realtime' });
+}
+function selectVideo(item) {
+  return queueAction({ kind: item ? 'video' : 'clear', item, mode: 'realtime' });
+}
+function delay(milliseconds) { return new Promise((resolve) => setTimeout(resolve, milliseconds)); }
+async function cancelServerJob(exceptId = null) {
+  const previous = state.serverJob;
+  if (!previous || previous.id === exceptId || !['running', 'queued'].includes(previous.status)) return;
+  await api(`/api/jobs/${encodeURIComponent(previous.id)}/cancel`, jsonOptions({}));
+  for (let attempt = 0; attempt < 120; attempt++) {
+    const job = await api(`/api/jobs/${encodeURIComponent(previous.id)}`);
+    state.serverJob = job;
+    if (!['running', 'queued'].includes(job.status)) return;
+    await delay(250);
   }
-  state.uploading = true;
-  updateControls();
-  $('analysis-hint').textContent = `Đang tải ${file.name}…`;
-  const form = new FormData();
-  form.append('file', file);
-  form.append('above_water', 'true');
-  form.append('camera_mode', $('camera-mode').value);
-  form.append('environment', $('environment').value);
-  try {
-    const item = await api('/api/videos', { method: 'POST', body: form });
-    state.uploading = false;
-    await loadVideos(item.id);
-    $('above-water').checked = true;
+  throw new Error('Phiên trước chưa dừng xong. Hãy chọn lại video khi máy chủ đã dừng xử lý.');
+}
+async function waitForModel(generation) {
+  for (let attempt = 0; attempt < 90 && generation === state.generation; attempt++) {
+    if (await loadStatus()) return true;
+    state.phase = 'AI đang khởi động · video sẽ nhận diện khi mô hình sẵn sàng';
     updateControls();
-    toast('Đã tải video. Bạn có thể vẽ vùng nước và bắt đầu phân tích.');
-  } catch (error) { showNotice(`Tải video thất bại: ${error.message}`, true); }
-  finally { state.uploading = false; $('file-input').value = ''; updateControls(); }
+    updateStreamStatus();
+    await delay(500);
+  }
+  if (generation !== state.generation) return false;
+  throw new Error('AI chưa sẵn sàng hoặc máy chủ chưa kết nối. Chọn lại video để thử lại.');
+}
+function queueAction(action) {
+  const generation = ++state.generation;
+  action = { ...action, generation };
+  clearTimeout(state.pollTimer);
+  state.playbackIntent = false;
+  state.bufferPaused = false;
+  video.pause();
+  showVideo(action.item || null);
+  state.switching = true;
+  state.phase = action.kind === 'upload' ? `Đang chuẩn bị tải ${action.file.name}…` : action.kind === 'history' ? 'Đang mở phiên đã lưu…' : 'Đang chuyển video…';
+  state.realtimeStarting = action.mode === 'realtime';
+  state.playbackIntent = action.mode === 'realtime';
+  state.bufferPaused = action.mode === 'realtime';
+  if (action.kind === 'video' || action.kind === 'upload') armAudioForSelection();
+  if (action.item && action.mode === 'realtime') { video.muted = true; attemptPlay(true); }
+  $('analysis-progress').hidden = action.kind === 'clear';
+  $('progress-percent').textContent = '0%';
+  $('progress-bar').value = 0;
+  $('progress-label').textContent = state.phase;
+  updateControls();
+  updateStreamStatus();
+  state.transition = state.transition.catch(() => {}).then(() => executeAction(action));
+  return state.transition;
+}
+async function executeAction(action) {
+  const { generation } = action;
+  if (generation !== state.generation) return;
+  try {
+    if (state.serverJob && ['running', 'queued'].includes(state.serverJob.status) && state.serverJob.id !== action.jobId) {
+      state.phase = 'Đang dừng phiên trước để chuyển video…';
+      updateControls(); updateStreamStatus();
+    }
+    await cancelServerJob(action.jobId);
+    if (generation !== state.generation) return;
+    if (action.kind === 'clear') return;
+    if (action.kind === 'history') {
+      const saved = await api(`/api/jobs/${encodeURIComponent(action.jobId)}`);
+      if (generation !== state.generation) return;
+      const source = state.videos.find((item) => item.id === saved.video?.id) || saved.video;
+      if (!source?.url) throw new Error('Không tìm thấy video gốc của phiên đã lưu.');
+      showVideo(source);
+      state.job = saved;
+      state.serverJob = saved;
+      state.realtimeStarting = false;
+      state.playbackIntent = false;
+      state.phase = '';
+      $('job-select').value = saved.id;
+      $('analysis-mode').value = saved.config?.mode || 'batch';
+      try { await loadAnalysis(saved, true); } catch (error) { if (!['running', 'queued'].includes(saved.status)) throw error; }
+      if (generation !== state.generation) return;
+      if (['running', 'queued'].includes(saved.status)) pollJob(generation);
+      return;
+    }
+    let item = action.item;
+    if (action.kind === 'upload') {
+      state.uploading = true;
+      state.phase = `Đang tải ${action.file.name}…`;
+      $('progress-label').textContent = state.phase;
+      updateControls(); updateStreamStatus();
+      const form = new FormData();
+      form.append('file', action.file);
+      form.append('above_water', 'true');
+      form.append('camera_mode', 'fixed');
+      form.append('environment', 'pool');
+      item = await api('/api/videos', { method: 'POST', body: form });
+      if (!state.videos.some((record) => record.id === item.id)) state.videos.push(item);
+      if (generation !== state.generation) return;
+      showVideo(item);
+      state.realtimeStarting = true;
+      state.playbackIntent = true;
+      state.bufferPaused = true;
+      video.muted = true;
+      attemptPlay();
+    }
+    if (unsupportedSource(item)) throw new Error('Chỉ tự nhận diện video CCTV bể bơi quan sát từ phía trên mặt nước.');
+    state.phase = 'AI đang khởi động · đang chuẩn bị nhận diện';
+    updateControls(); updateStreamStatus();
+    if (!await waitForModel(generation) || generation !== state.generation) return;
+    const config = { video_id: item.id, mode: action.mode || 'realtime', camera_mode: 'fixed', environment: 'pool', sample_fps: 5, confidence: state.recommendedConfidence, water_polygon: [], ...(action.config || {}) };
+    $('analysis-mode').value = config.mode;
+    $('camera-mode').value = config.camera_mode;
+    $('environment').value = config.environment;
+    $('confidence').value = String(config.confidence);
+    $('confidence-value').textContent = Number(config.confidence).toFixed(2);
+    state.submitting = true;
+    let job;
+    try { job = await api('/api/jobs', jsonOptions(config)); }
+    catch (error) {
+      if (error.status !== 409 || generation !== state.generation) throw error;
+      const running = await api('/api/jobs');
+      state.serverJob = (Array.isArray(running) ? running : running.jobs || []).find((record) => ['running', 'queued'].includes(record.status)) || null;
+      await cancelServerJob();
+      if (generation !== state.generation) return;
+      job = await api('/api/jobs', jsonOptions(config));
+    }
+    state.serverJob = job;
+    if (generation !== state.generation) { await cancelServerJob(); return; }
+    state.job = job;
+    state.realtimeStarting = false;
+    state.phase = '';
+    $('progress-help').textContent = 'Đang đọc video CCTV bể bơi tuần tự. Kết quả xuất hiện theo thời điểm đang phát; video tự chờ nếu AI chưa xử lý tới đó.';
+    renderFrame(true);
+    pollJob(generation);
+  } catch (error) {
+    if (generation === state.generation) {
+      state.realtimeStarting = false;
+      state.playbackIntent = false;
+      state.phase = '';
+      video.pause();
+      $('analysis-progress').hidden = true;
+      showNotice(error.message, true);
+    }
+  } finally {
+    state.uploading = false;
+    state.submitting = false;
+    if (generation === state.generation) { state.switching = false; updateControls(); updateStreamStatus(); }
+  }
 }
 function updateMode() {
   const ptz = $('camera-mode').value === 'ptz';
@@ -449,7 +573,7 @@ function renderFrame(force = false) {
   const detections = sample?.detections || [];
   detections.forEach((d) => drawDetection(d, rect));
   $('video-time').textContent = `${timeText(time)} / ${timeText(video.duration || state.selected?.duration)}`;
-  if (!force && result?.index === state.sampleIndex) return;
+  if (!force && result?.index === state.sampleIndex) { processCurrentAlarms(); return; }
   state.sampleIndex = result?.index ?? -1;
   $('metric-objects').textContent = state.analysis ? String(detections.filter((d) => !d.inferred).length) : '—';
   let level = Math.max(0, Math.min(3, Number(sample?.level) || 0));
@@ -473,7 +597,7 @@ function renderFrame(force = false) {
     $('alert-description').textContent = sample?.camera_moving ? 'Camera đang thay đổi góc nhìn. Kiểm tra hình ảnh trước khi suy luận mất dấu.' : reasonsText(best?.reasons || detections.filter((d) => Number(d.level) > 0).flatMap((d) => d.reasons || [])) || 'Kiểm tra trực tiếp đối tượng và khu vực được đánh dấu.';
   }
   renderEvents();
-  if (!video.paused && !state.seeking) actualRiskEvents.forEach(notifyEvent);
+  processCurrentAlarms();
 }
 function renderEvents() {
   const all = state.analysis?.events || [];
@@ -521,65 +645,20 @@ function seekVideo(time) {
   video.currentTime = target;
   renderFrame(true);
 }
-async function startAnalysis() {
-  if (!state.selected || !$('above-water').checked || isBusy()) return;
-  state.submitting = true;
-  video.pause();
-  state.generation += 1;
-  const generation = state.generation;
-  const mode = $('analysis-mode').value;
-  state.job = null;
-  state.realtimeStarting = mode === 'realtime';
-  state.playbackIntent = mode === 'realtime';
-  state.bufferPaused = mode === 'realtime';
-  state.playBlocked = false;
-  video.currentTime = 0;
-  video.playbackRate = 1;
-  updateControls();
-  stopDrawing();
-  showNotice('');
-  state.analysis = null;
-  state.eventSignature = '';
-  state.sampleIndex = -1;
-  state.notified.clear();
-  state.acked.clear();
-  $('export-controls').hidden = true;
-  $('performance-summary').hidden = true;
-  $('analysis-progress').hidden = false;
-  $('progress-percent').textContent = '0%';
-  $('progress-bar').value = 0;
-  $('review-mode').checked = false;
-  $('review-mode').disabled = true;
-  $('progress-help').textContent = mode === 'realtime' ? 'Video có sẵn được đọc tuần tự theo thời gian. AI cập nhật từng phần; video tự chờ khi chưa đủ kết quả. Không kết nối camera vật lý.' : 'Phân tích trước toàn bộ video. Cảnh báo khi phát lại chỉ dùng dữ liệu tại thời điểm đang xem.';
-  if (mode === 'realtime') attemptPlay(true);
-  updateStreamStatus();
-  try {
-    const job = await api('/api/jobs', jsonOptions({ video_id: state.selected.id, mode, camera_mode: $('camera-mode').value, environment: $('environment').value, above_water: true, water_polygon: state.polygon.length >= 3 ? state.polygon : [], sample_fps: Number($('sample-fps').value), confidence: Number($('confidence').value) }));
-    if (generation !== state.generation) return;
-    state.job = job;
-    state.realtimeStarting = false;
-    state.submitting = false;
-    updateControls();
-    renderFrame(true);
-    await pollJob();
-  } catch (error) {
-    state.realtimeStarting = false;
-    state.playbackIntent = false;
-    state.submitting = false;
-    video.pause();
-    $('analysis-progress').hidden = true;
-    showNotice(`Không thể bắt đầu phân tích: ${error.message}`, true);
-    updateControls();
-  }
+function startAnalysis() {
+  if (!state.selected) return Promise.resolve();
+  const config = { mode: $('analysis-mode').value, camera_mode: $('camera-mode').value, environment: $('environment').value, sample_fps: Number($('sample-fps').value), confidence: Number($('confidence').value), water_polygon: state.polygon.length >= 3 ? state.polygon.slice() : [] };
+  return queueAction({ kind: 'video', item: state.selected, mode: config.mode, config });
 }
-async function pollJob() {
+async function pollJob(generation = state.generation) {
   clearTimeout(state.pollTimer);
-  if (!state.job) return;
+  if (!state.job || generation !== state.generation) return;
   const id = state.job.id;
   try {
     const job = await api(`/api/jobs/${encodeURIComponent(id)}`);
-    if (state.job?.id !== id) return;
+    if (state.job?.id !== id || generation !== state.generation) return;
     state.job = job;
+    state.serverJob = job;
     const progress = Number(job.progress) || 0;
     const p = Math.min(100, Math.max(0, progress <= 1 ? progress * 100 : progress));
     $('progress-percent').textContent = `${Math.round(p)}%`;
@@ -588,7 +667,9 @@ async function pollJob() {
     if (!isRealtime()) $('playback-state').textContent = 'Đang phân tích trước video';
     if (job.status === 'completed') {
       await loadAnalysis(job, !isRealtime());
+      if (generation !== state.generation) return;
       await loadJobs();
+      if (generation !== state.generation) return;
       $('analysis-progress').hidden = true;
       toast(isRealtime() ? 'Đã phân tích hết nguồn video. Có thể xem lại toàn bộ sự kiện.' : 'Đã phân tích xong. Nhấn phát video để xem kết quả theo thời gian.');
       updateControls();
@@ -596,6 +677,7 @@ async function pollJob() {
     }
     if (['failed', 'cancelled'].includes(job.status)) {
       try { await loadAnalysis(job); } catch (_) { /* An early failure can precede the first snapshot. */ }
+      if (generation !== state.generation) return;
       $('analysis-progress').hidden = true;
       showNotice(job.status === 'cancelled' ? 'Đã dừng phân tích. Chỉ phần đã xử lý được lưu; đây không phải kết quả hoàn tất toàn bộ video.' : `Phân tích thất bại: ${job.error || 'Kiểm tra nhật ký máy chủ.'}. Có thể xem lại phần đã lưu.`, job.status === 'failed');
       $('playback-state').textContent = job.status === 'cancelled' ? 'Đã hủy phân tích' : 'Phân tích thất bại';
@@ -604,71 +686,191 @@ async function pollJob() {
     }
     if (isRealtime()) {
       try { await loadAnalysis(job); } catch (error) { if (!error.message.includes('Chưa có kết quả')) throw error; }
+      if (generation !== state.generation) return;
       enforceBuffer();
     }
     updateControls();
-    state.pollTimer = setTimeout(pollJob, 1000);
+    if (generation === state.generation) state.pollTimer = setTimeout(() => pollJob(generation), 300);
   } catch (error) {
+    if (generation !== state.generation) return;
     showNotice(`Chưa lấy được tiến độ: ${error.message}. Hệ thống sẽ thử lại.`, true);
-    state.pollTimer = setTimeout(pollJob, 3000);
+    if (generation === state.generation) state.pollTimer = setTimeout(() => pollJob(generation), 1500);
   }
 }
-async function enableAudio() {
+function audioReady() {
+  return state.audioEnabled && !state.audioMutedByUser && state.volume > 0 && state.audio?.state === 'running';
+}
+function saveMutePreference(muted) {
+  try { window.localStorage?.setItem('aquawatch.audioMuted', muted ? '1' : '0'); } catch (_) { /* Storage can be unavailable in private browsing. */ }
+}
+function loadAudioPreference() {
+  try { state.audioMutedByUser = window.localStorage?.getItem('aquawatch.audioMuted') === '1'; } catch (_) { state.audioMutedByUser = false; }
+  state.audioEnabled = !state.audioMutedByUser;
+  updateAudioUI();
+}
+function armAudioForSelection() {
+  if (state.audioMutedByUser) { updateAudioUI(); return Promise.resolve(false); }
+  return enableAudio();
+}
+async function enableAudio({ explicit = false, announceCurrent = false } = {}) {
+  if (state.audioMutedByUser && !explicit) return false;
+  if (explicit) {
+    state.audioMutedByUser = false;
+    saveMutePreference(false);
+    if (state.volume === 0) {
+      state.volume = state.lastNonZeroVolume || .25;
+      $('volume').value = String(Math.round(state.volume * 100));
+      $('volume-value').textContent = `${Math.round(state.volume * 100)}%`;
+    }
+  }
+  state.audioEnabled = true;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) { toast('Trình duyệt này không hỗ trợ Web Audio.'); return false; }
+  if (!AudioContextClass) { state.audioBlocked = true; state.audioError = 'Trình duyệt không hỗ trợ Web Audio'; updateAudioUI(); return false; }
+  const activation = ++state.audioActivation;
+  const deliveredBefore = state.audioDeliverySerial;
   try {
-    if (!state.audio) state.audio = new AudioContextClass();
-    await state.audio.resume();
-    state.audioEnabled = state.audio.state === 'running';
+    if (!state.audio || state.audio.state === 'closed') {
+      const context = new AudioContextClass();
+      state.audio = context;
+      context.onstatechange = () => {
+        if (state.audio !== context) return;
+        state.audioBlocked = context.state !== 'running';
+        if (state.audioBlocked) { state.audioNeedsReplay = true; stopAlarms(); }
+        updateAudioUI();
+        if (!state.audioBlocked) processCurrentAlarms({ force: state.audioNeedsReplay });
+      };
+    }
+    state.audioError = '';
+    state.audioBlocked = state.audio.state !== 'running';
+    const resumed = state.audio.state === 'running' ? Promise.resolve() : state.audio.resume();
     updateAudioUI();
-    return state.audioEnabled;
-  } catch (_) { toast('Không thể kích hoạt âm thanh. Kiểm tra quyền của trình duyệt.'); return false; }
+    await resumed;
+    if (activation !== state.audioActivation) return audioReady();
+    state.audioBlocked = state.audio.state !== 'running';
+    updateAudioUI();
+    if (audioReady() && announceCurrent && state.audioDeliverySerial === deliveredBefore) processCurrentAlarms({ force: true });
+    return audioReady();
+  } catch (_) {
+    if (activation === state.audioActivation) {
+      state.audioBlocked = true;
+      state.audioError = 'Trình duyệt chưa cho phát âm. Nhấn Bật âm báo để thử lại';
+      updateAudioUI();
+    }
+    return false;
+  }
+}
+function muteAudio() {
+  state.audioMutedByUser = true;
+  state.audioEnabled = false;
+  state.audioNeedsReplay = false;
+  saveMutePreference(true);
+  stopAlarms();
+  updateAudioUI();
+}
+async function toggleAudio() {
+  if (audioReady()) { muteAudio(); toast('Đã tắt âm. Cảnh báo hình ảnh và nhật ký vẫn được giữ.'); }
+  else await enableAudio({ explicit: true, announceCurrent: true });
 }
 function updateAudioUI() {
-  $('enable-audio').textContent = state.audioEnabled ? 'Tắt' : 'Bật';
-  $('audio-state').textContent = state.audioEnabled ? `Đã bật · âm lượng ${Math.round(state.volume * 100)}%` : 'Âm thanh đang tắt';
-  $('banner-mute').title = state.audioEnabled ? 'Tắt âm cảnh báo' : 'Âm cảnh báo đang tắt';
+  const ready = audioReady();
+  const muted = state.audioMutedByUser || !state.audioEnabled;
+  let message = ready ? `Âm báo sẵn sàng · âm lượng ${Math.round(state.volume * 100)}%` : muted ? 'Bạn đã tắt âm · chỉ cảnh báo hình ảnh' : state.volume === 0 ? 'Âm lượng ứng dụng bằng 0 · nhấn Bật âm hoặc tăng âm lượng' : state.audio ? (state.audioError || 'Âm đang bị trình duyệt tạm dừng · nhấn Bật âm báo') : 'Âm báo sẽ tự chuẩn bị khi bạn chọn hoặc phát video';
+  $('enable-audio').textContent = ready ? 'Tắt âm' : 'Bật âm';
+  $('audio-state').textContent = message;
+  $('audio-readiness-text').textContent = message;
+  $('audio-strip').hidden = !state.selected && !state.audio && !muted;
+  $('audio-strip').className = `audio-strip${ready ? ' ready' : muted ? ' muted' : ' blocked'}`;
+  for (const id of ['banner-mute', 'audio-resume']) {
+    $(id).textContent = ready ? 'Tắt âm' : 'Bật âm báo';
+    $(id).title = ready ? 'Tắt âm cảnh báo' : 'Cho phép phát âm và báo lại sự kiện đang diễn ra';
+    $(id).setAttribute('aria-label', $(id).title);
+  }
 }
 function playAlarm(level = 2) {
-  if (!state.audioEnabled || !state.audio || state.audio.state !== 'running' || !state.volume) return;
+  if (!audioReady()) { if (state.audioEnabled && !state.audioMutedByUser) state.audioNeedsReplay = true; updateAudioUI(); return false; }
   const now = state.audio.currentTime;
   const count = level === 3 ? 4 : level === 2 ? 3 : 2;
-  for (let i = 0; i < count; i++) {
-    const start = now + i * .32;
-    const oscillator = state.audio.createOscillator();
-    const gain = state.audio.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(level >= 2 ? 730 : 520, start);
-    oscillator.frequency.linearRampToValueAtTime(level === 3 ? 1100 : level === 2 ? 930 : 620, start + .18);
-    gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(state.volume * .35, start + .025);
-    gain.gain.exponentialRampToValueAtTime(.001, start + .24);
-    oscillator.connect(gain);
-    gain.connect(state.audio.destination);
-    const nodes = { oscillator, gain };
-    state.alarmNodes.add(nodes);
-    oscillator.start(start);
-    oscillator.stop(start + .26);
-    oscillator.onended = () => { state.alarmNodes.delete(nodes); oscillator.disconnect(); gain.disconnect(); };
+  try {
+    for (let i = 0; i < count; i++) {
+      const start = now + i * .32;
+      const oscillator = state.audio.createOscillator();
+      const gain = state.audio.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(level >= 2 ? 730 : 520, start);
+      oscillator.frequency.linearRampToValueAtTime(level === 3 ? 1100 : level === 2 ? 930 : 620, start + .18);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(state.volume * .5, start + .025);
+      gain.gain.exponentialRampToValueAtTime(.001, start + .24);
+      oscillator.connect(gain);
+      gain.connect(state.audio.destination);
+      const nodes = { oscillator, gain };
+      state.alarmNodes.add(nodes);
+      oscillator.start(start);
+      oscillator.stop(start + .26);
+      oscillator.onended = () => { state.alarmNodes.delete(nodes); oscillator.disconnect(); gain.disconnect(); };
+    }
+    state.audioDeliverySerial += 1;
+    state.audioNeedsReplay = false;
+    return true;
+  } catch (_) {
+    stopAlarms();
+    state.audioBlocked = true;
+    state.audioError = 'Không tạo được âm báo · nhấn Bật âm báo để thử lại';
+    updateAudioUI();
+    return false;
   }
 }
 function stopAlarms() {
   for (const { oscillator, gain } of state.alarmNodes) {
-    gain.gain.cancelScheduledValues(0);
-    gain.gain.setValueAtTime(0, state.audio.currentTime);
-    try { oscillator.stop(); } catch (_) { /* Already-ended oscillators need no action. */ }
+    try {
+      gain.gain.cancelScheduledValues(0);
+      gain.gain.setValueAtTime(0, state.audio?.currentTime || 0);
+      oscillator.stop();
+      oscillator.disconnect();
+      gain.disconnect();
+    } catch (_) { /* Already-ended or closed nodes require no further action. */ }
   }
   state.alarmNodes.clear();
 }
-function notifyEvent(event) {
+function activeAlarmEvents() {
+  if (video.paused || video.ended || video.seeking || state.seeking || (Number.isFinite(video.readyState) && video.readyState < 2)) return [];
+  const time = video.currentTime || 0;
+  const sample = sampleAt(time)?.sample;
+  if (!sample) return [];
+  return currentEvents(time).filter((event) => Number(event.level) > 0 && !event.acknowledged && !state.acked.has(event.id) && sample.detections?.some((detection) => detection.track_id === event.track_id && Number(detection.level) === Number(event.level)));
+}
+function sendEventSignals(event) {
   const key = `${state.job?.id}:${event.id}:${event.level}`;
-  if (state.notified.has(key) || event.acknowledged || state.acked.has(event.id)) return;
-  state.notified.add(key);
-  playAlarm(Number(event.level) || 1);
-  if ($('enable-vibration').checked && typeof navigator.vibrate === 'function') navigator.vibrate(Number(event.level) >= 2 ? [160, 90, 160] : [100]);
+  if (state.signalNotified.has(key)) return;
+  let attempted = false;
+  if ($('enable-vibration').checked && typeof navigator.vibrate === 'function') { navigator.vibrate(Number(event.level) >= 2 ? [160, 90, 160] : [100]); attempted = true; }
   if (state.notificationEnabled && window.Notification?.permission === 'granted') {
-    try { new Notification(`AquaWatch · ${LEVELS[event.level] || 'Cảnh báo'}`, { body: `Đối tượng #${event.track_id} · ${timeText(event.start)}. Kiểm tra video trực tiếp.`, tag: key, silent: true }); } catch (_) { /* Notification constructors may be unavailable on mobile. */ }
+    try { new Notification(`AquaWatch · ${LEVELS[event.level] || 'Cảnh báo'}`, { body: `Đối tượng #${event.track_id} · ${timeText(event.start)}. Kiểm tra video trực tiếp.`, tag: key, silent: true }); attempted = true; } catch (_) { /* Notification constructors can be unavailable on mobile. */ }
   }
+  if (attempted) state.signalNotified.add(key);
+}
+function notifyEvent(event, { force = false } = {}) {
+  if (!activeAlarmEvents().some((current) => current.id === event.id && current.level === event.level)) return false;
+  if (!audioReady()) { if (!state.audioMutedByUser) state.audioNeedsReplay = true; updateAudioUI(); return false; }
+  const key = `${state.job?.id}:${event.id}:${event.level}`;
+  const now = Date.now();
+  const previous = state.audioLastByEvent.get(key);
+  const repeat = Number(event.level) >= 3 ? 5000 : Number(event.level) >= 2 ? 8000 : Infinity;
+  if (!force && previous !== undefined && now - previous < repeat) return false;
+  if (!force && now - state.lastAlarmAt < 1500 && Number(event.level) <= state.lastAlarmLevel) return false;
+  stopAlarms();
+  if (!playAlarm(Number(event.level) || 1)) return false;
+  state.notified.add(key);
+  state.audioLastByEvent.set(key, now);
+  state.lastAlarmAt = now;
+  state.lastAlarmLevel = Number(event.level) || 1;
+  return true;
+}
+function processCurrentAlarms({ force = false } = {}) {
+  const events = activeAlarmEvents().sort((a,b) => Number(b.level) - Number(a.level));
+  if (!events.length) return false;
+  events.forEach(sendEventSignals);
+  return notifyEvent(events[0], { force });
 }
 function capabilityUI() {
   const notificationSupported = 'Notification' in window && window.isSecureContext;
@@ -676,7 +878,7 @@ function capabilityUI() {
   $('notification-state').textContent = !('Notification' in window) ? 'Trình duyệt không hỗ trợ' : !window.isSecureContext ? 'Cần HTTPS hoặc localhost' : Notification.permission === 'denied' ? 'Quyền đã bị từ chối' : 'Chưa bật trên thiết bị này';
   $('enable-vibration').disabled = typeof navigator.vibrate !== 'function';
   const vibration = typeof navigator.vibrate === 'function' ? 'Có API rung; thiết bị có thể không phản hồi.' : 'Thiết bị này không có API rung.';
-  $('capability-note').textContent = `Âm thanh cần thao tác bật và phụ thuộc âm lượng hệ thống. ${vibration} Thông báo cần quyền và ngữ cảnh bảo mật; không bảo đảm hoạt động khi đóng trang.`;
+  $('capability-note').textContent = `Âm báo tự chuẩn bị khi chọn/phát video và phụ thuộc âm lượng hệ thống. Nếu bị trình duyệt chặn, nhấn Bật âm báo. ${vibration} Thông báo cần quyền và ngữ cảnh bảo mật; không bảo đảm hoạt động khi đóng trang.`;
 }
 
 $('video-select').addEventListener('change', (event) => selectVideo(state.videos.find((item) => item.id === event.target.value)));
@@ -686,21 +888,24 @@ $('analysis-mode').addEventListener('change', updateControls);
 $('refresh-library').addEventListener('click', () => loadVideos().then(() => toast('Đã làm mới thư viện.')).catch((error) => showNotice(error.message, true)));
 $('library-grid').addEventListener('click', (event) => { const button = event.target.closest('[data-video-id]'); if (!button || button.disabled) return; selectVideo(state.videos.find((item) => item.id === button.dataset.videoId)); $('monitor').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 $('stream-play').addEventListener('click', () => {
+  armAudioForSelection();
   if (state.playbackIntent && !state.playBlocked) { state.playbackIntent = false; state.bufferPaused = false; video.pause(); }
   else { state.playbackIntent = true; state.playBlocked = false; state.bufferPaused = false; attemptPlay(true); enforceBuffer(); }
   updateStreamStatus();
 });
-$('empty-upload').addEventListener('click', () => { $('source-panel').scrollIntoView({ behavior: 'smooth', block: 'center' }); if ($('above-water').checked) $('file-input').click(); else { showNotice('Hãy xác nhận góc quay trên mặt nước trong mục Nguồn video, sau đó chọn tệp.'); $('above-water').focus(); } });
+$('empty-upload').addEventListener('click', () => { armAudioForSelection(); $('file-input').click(); });
+$('file-input').addEventListener('click', armAudioForSelection);
 $('file-input').addEventListener('change', (event) => uploadFile(event.target.files[0]));
 const uploadZone = document.querySelector('.upload-zone');
 uploadZone.tabIndex = 0;
+uploadZone.addEventListener('click', armAudioForSelection);
+uploadZone.addEventListener('pointerdown', armAudioForSelection);
 uploadZone.setAttribute('role', 'button');
 uploadZone.setAttribute('aria-label', 'Chọn video để tải lên');
-uploadZone.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (!$('file-input').disabled) $('file-input').click(); } });
+uploadZone.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); armAudioForSelection(); if (!$('file-input').disabled) $('file-input').click(); } });
 ['dragenter', 'dragover'].forEach((name) => uploadZone.addEventListener(name, (event) => { event.preventDefault(); uploadZone.classList.add('dragging'); }));
 ['dragleave', 'drop'].forEach((name) => uploadZone.addEventListener(name, (event) => { event.preventDefault(); uploadZone.classList.remove('dragging'); }));
 uploadZone.addEventListener('drop', (event) => uploadFile(event.dataTransfer.files[0]));
-$('above-water').addEventListener('change', updateControls);
 $('camera-mode').addEventListener('change', updateMode);
 $('confidence').addEventListener('input', () => { $('confidence-value').textContent = Number($('confidence').value).toFixed(2); });
 $('analyze').addEventListener('click', startAnalysis);
@@ -745,6 +950,7 @@ $('event-list').addEventListener('click', async (event) => {
   try {
     await api(`/api/jobs/${encodeURIComponent(state.job.id)}/events/${encodeURIComponent(ack.dataset.ack)}/ack`, jsonOptions({ note: 'Người dùng xác nhận đã xem trên giao diện.' }));
     state.acked.add(ack.dataset.ack);
+    stopAlarms();
     const item = state.analysis.events.find((e) => String(e.id) === ack.dataset.ack);
     if (item) item.acknowledged = true;
     state.eventSignature = '';
@@ -752,10 +958,19 @@ $('event-list').addEventListener('click', async (event) => {
     toast('Đã xác nhận đã xem. Việc xác nhận không kết luận tình huống đã an toàn.');
   } catch (error) { ack.disabled = false; showNotice(`Không lưu được xác nhận: ${error.message}`, true); }
 });
-$('enable-audio').addEventListener('click', async () => { if (state.audioEnabled) { state.audioEnabled = false; stopAlarms(); updateAudioUI(); } else if (await enableAudio()) toast('Đã bật âm báo cho các sự kiện mới khi phát video.'); });
-$('test-audio').addEventListener('click', async () => { if (await enableAudio()) playAlarm(2); });
-$('volume').addEventListener('input', () => { state.volume = Number($('volume').value) / 100; $('volume-value').textContent = `${Math.round(state.volume * 100)}%`; updateAudioUI(); });
-$('banner-mute').addEventListener('click', () => { state.audioEnabled = false; stopAlarms(); updateAudioUI(); toast('Đã tắt âm. Cảnh báo hình ảnh và nhật ký vẫn được giữ.'); });
+$('enable-audio').addEventListener('click', toggleAudio);
+$('audio-resume').addEventListener('click', toggleAudio);
+$('banner-mute').addEventListener('click', toggleAudio);
+$('test-audio').addEventListener('click', async () => { if (await enableAudio({ explicit: true })) playAlarm(2); });
+$('volume').addEventListener('input', () => {
+  const previous = state.volume;
+  state.volume = Number($('volume').value) / 100;
+  if (state.volume > 0) state.lastNonZeroVolume = state.volume;
+  else stopAlarms();
+  $('volume-value').textContent = `${Math.round(state.volume * 100)}%`;
+  updateAudioUI();
+  if (previous === 0 && state.volume > 0) processCurrentAlarms({ force: true });
+});
 $('enable-notifications').addEventListener('click', async () => {
   if (!('Notification' in window) || !window.isSecureContext) return;
   if (state.notificationEnabled) { state.notificationEnabled = false; $('enable-notifications').textContent = 'Bật'; $('notification-state').textContent = 'Đã tắt trong ứng dụng'; return; }
@@ -767,6 +982,8 @@ $('enable-notifications').addEventListener('click', async () => {
   } catch (_) { toast('Không thể yêu cầu thông báo trên trình duyệt này.'); }
 });
 $('enable-vibration').addEventListener('change', () => { if ($('enable-vibration').checked && typeof navigator.vibrate === 'function') { navigator.vibrate(80); toast('Đã thử rung. Chỉ bật tính năng này nếu thiết bị thực sự phản hồi.'); } });
+video.addEventListener('pointerdown', armAudioForSelection);
+video.addEventListener('keydown', (event) => { if ([' ', 'Enter', 'k'].includes(event.key)) armAudioForSelection(); });
 video.addEventListener('loadedmetadata', () => { renderFrame(true); updateControls(); });
 video.addEventListener('timeupdate', () => { enforceBuffer(); renderFrame(); });
 video.addEventListener('seeking', () => {
@@ -791,6 +1008,7 @@ requestAnimationFrame(animationLoop);
 
 async function initialize() {
   capabilityUI();
+  loadAudioPreference();
   await Promise.all([loadStatus(), loadVideos().catch((error) => showNotice(`Chưa tải được thư viện video: ${error.message}`, true)), loadJobs().catch((error) => showNotice(`Chưa tải được lịch sử: ${error.message}`, true))]);
   updateControls();
   setInterval(loadStatus, 20000);

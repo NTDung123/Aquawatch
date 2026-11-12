@@ -15,7 +15,27 @@ from .vision import CameraMotion, VisionEngine
 POOL = ThreadPoolExecutor(max_workers=1)
 CANCELLED = set()
 LOCK = threading.Lock()
+MODEL_LOCK = threading.Lock()
 ENGINE = None
+ENGINE_ERROR = None
+MODEL_STARTUP_SECONDS = None
+
+
+def prepare_engine():
+    global ENGINE, ENGINE_ERROR, MODEL_STARTUP_SECONDS
+    with MODEL_LOCK:
+        desired_path = selected_model()
+        desired_sha = hashlib.sha256(desired_path.read_bytes()).hexdigest()
+        if ENGINE is None or ENGINE.path != desired_path or ENGINE.sha256 != desired_sha:
+            started = time.perf_counter()
+            try:
+                ENGINE = VisionEngine()
+                ENGINE_ERROR = None
+                MODEL_STARTUP_SECONDS = round(time.perf_counter() - started, 3)
+            except Exception as error:
+                ENGINE_ERROR = f"{type(error).__name__}: {error}"
+                raise
+        return ENGINE
 
 
 def probe(path):
@@ -98,10 +118,7 @@ def run(job, clock=None, sleeper=None):
         store.put("jobs", job)
         write_analysis(folder, result)
         model_load_started = clock()
-        desired_path = selected_model()
-        desired_sha = hashlib.sha256(desired_path.read_bytes()).hexdigest()
-        if ENGINE is None or ENGINE.path != desired_path or ENGINE.sha256 != desired_sha:
-            ENGINE = VisionEngine()
+        prepare_engine()
         model_load_seconds = clock() - model_load_started
         config, video = job["config"], job["video"]
         cap = cv2.VideoCapture(video["path"])
@@ -167,7 +184,8 @@ def run(job, clock=None, sleeper=None):
                 active_events[key]["end"] = sample["time"]
             # Keep an episode across a short detector gap, without filling that gap with boxes.
             active_events = {k: e for k, e in active_events.items() if sample["time"] - e["end"] <= 1.0}
-            if clock() - last_snapshot >= .5 or len(result["samples"]) == 1:
+            snapshot_interval = .2 if mode == "realtime" and timestamp < 3 else .5
+            if clock() - last_snapshot >= snapshot_interval or len(result["samples"]) == 1:
                 job["progress"] = min(.999, (index + 1) / video["frames"])
                 job["processed_until"] = sample["time"]
                 job["source_elapsed_seconds"] = result["source_elapsed_seconds"]

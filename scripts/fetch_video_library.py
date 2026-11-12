@@ -161,7 +161,7 @@ def main():
         capture.release()
         if ok:
             cv2.imwrite(str(poster), frame)
-        videos.append({"id": spec["id"], "name": spec["name"], "path": str(target),
+        videos.append({"id": spec["id"], "name": spec["name"], "path": target.relative_to(ROOT).as_posix(),
                        "url": "/media/library/clips/" + target.name, **info, "size_bytes": target.stat().st_size,
                        "thumbnail_url": "/media/library/clips/" + poster.name,
                        "sha256": digest(target), "source_id": source["id"], "source_group": source["source_group"],

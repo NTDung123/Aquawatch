@@ -1,4 +1,5 @@
 import csv
+import asyncio
 import hashlib
 import io
 import json
@@ -23,6 +24,11 @@ async def lifespan(app):
         if job["status"] in ("running", "queued"):
             job.update(status="failed", error="Lần xử lý trước bị gián đoạn. Hãy tạo lượt phân tích mới.")
             store.put("jobs", job)
+    if getattr(app.state, "warmup_model", True):
+        try:
+            await asyncio.to_thread(jobs.prepare_engine)
+        except Exception:
+            pass
     yield
 
 
@@ -77,7 +83,8 @@ def status():
     record = json.loads(record_file.read_text(encoding="utf-8")) if fine and record_file.is_file() else {}
     deployment = getattr(jobs.ENGINE, "deployment", {}) if jobs.ENGINE else record.get("deployment", {})
     memory = psutil.virtual_memory()
-    return {"name": "AquaWatch", "mode": "local", "model": {"ready": MODEL.exists(),
+    return {"name": "AquaWatch", "mode": "local", "model": {"ready": jobs.ENGINE is not None and not jobs.ENGINE_ERROR,
+             "loaded": jobs.ENGINE is not None, "startup_seconds": jobs.MODEL_STARTUP_SECONDS, "error": jobs.ENGINE_ERROR,
              "name": deployment.get("display_name", "YOLOv8s fine-tuned local") if fine else "YOLOv8s community baseline",
              "recommended_confidence": deployment.get("recommended_confidence", .4),
              "preprocessing": deployment.get("preprocessing", "letterbox"),
@@ -136,7 +143,7 @@ def create_job(request: JobRequest):
     video = store.get("videos", request.video_id)
     if video is None:
         raise HTTPException(404, "Không tìm thấy video")
-    if not MODEL.exists():
+    if not selected_model().is_file():
         raise HTTPException(503, "Thiếu model. Chạy scripts/fetch_assets.py trước.")
     with jobs.LOCK:
         if any(j["status"] in ("queued", "running") for j in store.all_items("jobs")):
